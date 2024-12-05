@@ -11,6 +11,8 @@ namespace FishTankSimulator
         private List<Food> _foodList;
         private List<PredatorFish> _predatorFishList;
         private List<Treasure> _treasureList; 
+        private List<Snail> _snailList;
+        private int _maxSnails;
         private int _maxFish;
         private int _money;
         private Shop _shop;
@@ -26,12 +28,18 @@ namespace FishTankSimulator
             _fishList = new List<CoinFish>();
             _coinList = new List<Coin>();
              _treasureList = new List<Treasure>(); // Initialize the treasure list
+            _snailList = new List<Snail>();
+            _maxSnails = 2;
             _maxFish = 10;
             _money = shop.GoldAmount; // Initialize from shop
             _shop = shop;
         }
 
-
+        public List<Coin> CoinList
+        {
+            get => _coinList;
+            set => _coinList = value;
+        }
         // Properties
         public List<Food> FoodList
         {
@@ -54,9 +62,34 @@ namespace FishTankSimulator
         /// </summary>
         public bool TryBuyFish(int fishIndex)
         {
-            // Get the cost of the selected fish
+            // Get the cost of the selected item (fish or snail)
             int fishCost = _shop.GetFishCost(fishIndex);
 
+            // Check if the selected index corresponds to the Snail
+            if (fishIndex == _shop.FishIcons.Count - 1) // Assuming the last icon is for the Snail
+            {
+                if (_snailList.Count >= _maxSnails)
+                {
+                    Console.WriteLine("Cannot buy more snails. Maximum snails reached.");
+                    return false;
+                }
+
+                if (_money >= fishCost)
+                {
+                    _money -= fishCost;
+
+                    Vector2 initialPosition = GetRandomPosition();
+                    Snail newSnail = new Snail(this);
+
+                    AddSnail(newSnail);
+                    return true;
+                }
+
+                Console.WriteLine("Not enough money to buy Snail.");
+                return false;
+            }
+
+            // Handle fish purchase
             if (_fishList.Count >= _maxFish)
             {
                 Console.WriteLine("Cannot buy more fish. Tank is full.");
@@ -75,8 +108,10 @@ namespace FishTankSimulator
                 return true;
             }
 
+            Console.WriteLine("Not enough money to buy Fish.");
             return false;
         }
+
 
         private bool IsShopInteracting()
         {
@@ -86,7 +121,14 @@ namespace FishTankSimulator
             return clickedFishIndex.HasValue || isWeaponFrameClicked;
         }
 
-
+        public void AddSnail(Snail snail)
+        {
+            _snailList.Add(snail);
+        }
+        public void RemoveSnail(Snail snail)
+        {
+            _snailList.Remove(snail);
+        }
 
         /// <summary>
         /// Adds a new fish to the tank and subscribes to its coin drop event.
@@ -146,8 +188,7 @@ namespace FishTankSimulator
             // Place this block here to allow weapon usage after shop interactions but before handling other actions
             if (!clickHandled && _shop.IsWeaponActivated() && Raylib.IsMouseButtonPressed(MouseButton.Left))
             {
-                UseWeapon();
-                
+                UseWeapon(deltaTime);
                 clickHandled = true;
             }
 
@@ -168,18 +209,17 @@ namespace FishTankSimulator
             UpdateFood(deltaTime, windowHeight);
             UpdateTreasures(deltaTime, windowHeight, ref clickHandled);
             UpdatePredators(deltaTime, windowWidth, windowHeight);
-
-            // Draw the weapon effect regardless of clickHandled to allow interaction with weapon while keeping other interactions intact
-            
+            UpdateSnails(deltaTime, windowWidth, windowHeight);
+            // Draw the weapon effect regardless of clickHandled to allow interaction with weapon while keeping other interactions intact    
         }
 
-        private void UseWeapon()
+        private void UseWeapon(float deltaTime)
         {
             Vector2 mousePosition = Raylib.GetMousePosition();
 
-            if (_money >= 10) // Example cost per shot
+            if (_money >= _shop.Weapon.Cost) // Example cost per shot
             {
-                _money -= 10;
+                _money -= _shop.Weapon.Cost;
 
                 bool predatorHit = false;
 
@@ -193,8 +233,7 @@ namespace FishTankSimulator
                     }
                 }
 
-                _shop.Weapon.StartWeaponEffect(mousePosition);
-                _shop.Weapon.DrawWeaponEffect();
+                _shop.Weapon.HandleWeaponEffect(mousePosition, deltaTime);
 
                 if (!predatorHit)
                 {
@@ -229,7 +268,11 @@ namespace FishTankSimulator
             foreach (var predator in _predatorFishList)
                 predator.Draw(deltaTime); // Draw predators
 
+            foreach (var snail in _snailList)
+                snail.Draw(deltaTime);
+
             DrawMoney();
+            _shop.Weapon.HandleWeaponEffect(null, deltaTime);
         }
 
 
@@ -249,6 +292,9 @@ namespace FishTankSimulator
 
             foreach (var predator in _predatorFishList)
                 predator.UnloadTextures(); // Unload predator textures
+
+            foreach (var snail in _snailList)
+                snail.UnloadTextures();
 
             _shop.UnloadTextures();
         }
@@ -275,6 +321,15 @@ namespace FishTankSimulator
                     fish.OnCoinDropped -= AddCoinToTank;
                     _fishList.RemoveAt(i);
                 }
+            }
+        }
+
+        private void UpdateSnails(float deltaTime, int windowWidth, int windowHeight)
+        {
+            for (int i = _snailList.Count - 1; i >= 0; i--)
+            {
+                var snail = _snailList[i];
+                snail.Update(deltaTime, windowWidth, windowHeight);
             }
         }
 
@@ -312,6 +367,11 @@ namespace FishTankSimulator
             }
 
             return clickHandled;
+        }
+        public void CollectCoin(Coin coin)
+        {
+            _money += coin.GetValue();
+            _coinList.Remove(coin);
         }
         private void UpdatePredators(float deltaTime, int windowWidth, int windowHeight)
         {
@@ -363,7 +423,6 @@ namespace FishTankSimulator
                 }
             }
         }
-
 
         private void SpawnPredator()
         {

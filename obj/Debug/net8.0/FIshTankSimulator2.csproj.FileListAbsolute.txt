@@ -952,3 +952,4 @@ D:\Y1 S1 2024\COS20007\FIshTankSimulator2\bin\Debug\net8.0\Moq.dll
 D:\Y1 S1 2024\COS20007\FIshTankSimulator2\bin\Debug\net8.0\System.Diagnostics.EventLog.dll
 D:\Y1 S1 2024\COS20007\FIshTankSimulator2\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Diagnostics.EventLog.Messages.dll
 D:\Y1 S1 2024\COS20007\FIshTankSimulator2\bin\Debug\net8.0\runtimes\win\lib\net6.0\System.Diagnostics.EventLog.dll
+D:\Y1 S1 2024\COS20007\FIshTankSimulator2\obj\Debug\net8.0\FIshTankSimulator2.sourcelink.json

@@ -32,7 +32,6 @@ namespace FishTankSimulator
             _weapon = new Weapon();
             _shop = new Shop(3000, _weapon);
             _tank = new Tank(_shop);
-
             _tankBackground = Raylib.LoadTexture("sprites/tank.png");
             if (_tankBackground.Id == 0)
             {

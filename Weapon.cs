@@ -8,8 +8,7 @@ namespace FishTankSimulator
     public class Weapon
     {
         private float damage;
-        private float range;
-        private float cost;
+        private int cost;
         private bool isActived;
         private float stunDuration;
 
@@ -17,22 +16,19 @@ namespace FishTankSimulator
         private bool isEffectActive;
         private Vector2 effectPosition;
         private float effectRadius;
-        private int effectFrame;
-        private const int effectDuration = 15;
-        private const float maxEffectRadius = 50.0f;
+        private const float effectDuration = 0.2f;
+        private const float maxEffectRadius = 30.0f;
+        private float effectTimer = 0f;
 
         public Weapon()
         {
-            damage = 50;
-            range = 30;
-            cost = 20;
+            damage = 20;
+            cost = 10;
             isActived = false;
             stunDuration = 0.7f;
-
             // Initialize effect state
             isEffectActive = false;
             effectRadius = 0;
-            effectFrame = 0;
         }
 
         public bool IsActived
@@ -41,9 +37,9 @@ namespace FishTankSimulator
             set => isActived = value;
         }
 
-        public float Range
+        public int Cost
         {
-            get => range;
+            get => cost;
         }
 
         public void Attack(PredatorFish shark)
@@ -52,29 +48,44 @@ namespace FishTankSimulator
         }
 
         
-        public void StartWeaponEffect(Vector2 position)
+        public void HandleWeaponEffect(Vector2? startPosition, float deltaTime)
         {
-            isEffectActive = true;
-            effectPosition = position;
-            effectRadius = 0;
-            effectFrame = 0;
-        }
+            // Start the effect if a position is provided
+            if (startPosition.HasValue)
+            {
+                isEffectActive = true;
+                effectPosition = startPosition.Value;
+                effectRadius = maxEffectRadius; // Start with the maximum radius
+                effectTimer = 0f; // Reset the timer
+            }
 
-        public void DrawWeaponEffect()
-        {
+            // Update and draw the effect if active
             if (isEffectActive)
             {
-                // Increase effect radius and draw the expanding circle
-                effectRadius += maxEffectRadius / effectDuration; // Smoothly expand radius
-                Raylib.DrawCircle((int)effectPosition.X, (int)effectPosition.Y, effectRadius, Color.Red);
+                // Increment effect timer
+                effectTimer += deltaTime;
 
-                effectFrame++;
-                if (effectFrame >= effectDuration)
+                // Calculate the current radius based on elapsed time
+                effectRadius = maxEffectRadius * (1 - (effectTimer / effectDuration));
+
+                // Calculate the fading alpha based on elapsed time
+                int alpha = (int)(255 * (1 - (effectTimer / effectDuration)));
+
+                // Ensure alpha is clamped between 0 and 255
+                alpha = Math.Clamp(alpha, 0, 255);
+
+                // Draw the shrinking and fading circle
+                Raylib.DrawCircleV(effectPosition, effectRadius, new Color(255, 0, 0, alpha));
+
+                // Disable the effect if the timer exceeds the duration
+                if (effectTimer >= effectDuration)
                 {
-                    isEffectActive = false; // Disable the effect after the duration
+                    isEffectActive = false;
                 }
             }
         }
+
+
 
 
     }

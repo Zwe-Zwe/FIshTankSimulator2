@@ -39,8 +39,8 @@ namespace FishTankSimulator
             string basePath = fishType switch
             {
                 CoinFishType.Guppy => "sprites/guppy",
-                CoinFishType.Snapper => "sprites/snapper",
-                CoinFishType.Flounder => "sprites/flounder",
+                CoinFishType.Snapper => "sprites/blue",
+                CoinFishType.Flounder => "sprites/red",
                 _ => "sprites/guppy"
             };
 

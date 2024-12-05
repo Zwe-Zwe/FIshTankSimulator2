@@ -27,22 +27,23 @@ namespace FishTankSimulator
             goldAmount = startingGold;
             weapon = weaponInstance;
 
-            // Load fish icons
+            // Load icons for fish and snail
             fishIcons = new List<Texture2D>
             {
                 Raylib.LoadTexture("sprites/guppy/swim_to_left/1.png"), // Icon for Guppy
-                Raylib.LoadTexture("sprites/guppy/swim_to_left/1.png"),            // Icon for Snapper
-                Raylib.LoadTexture("sprites/guppy/swim_to_left/1.png")           // Icon for Flounder
+                Raylib.LoadTexture("sprites/blue/swim_to_left/1.png"), // Icon for Snapper
+                Raylib.LoadTexture("sprites/red/swim_to_left/1.png"), // Icon for Flounder
+                Raylib.LoadTexture("sprites/shark/swim_to_left/1.png") // Icon for Snail
             };
 
             // Load frame texture
             frameTexture = Raylib.LoadTexture("sprites/frame.png");
 
-            // Define fish costs and names
-            fishCosts = new List<int> { 100, 150, 200 };
-            fishNames = new List<string> { "Guppy", "Snapper", "Flounder" };
+            // Define costs and names for fish and snail
+            fishCosts = new List<int> { 100, 150, 200, 300 }; // Last cost is for Snail
+            fishNames = new List<string> { "Guppy", "Snapper", "Flounder", "Snail" }; // Last name is Snail
 
-            // Define positions for the fish icons
+            // Define positions for the icons
             fishIconRects = new List<Rectangle>();
             int frameSize = iconSize + 20; // Frame is slightly larger than the icon
             int totalPadding = padding + frameSize; // Spacing considers frame size and padding
@@ -57,9 +58,9 @@ namespace FishTankSimulator
                 ));
             }
 
-            // Load weapon icon and define its frame inline with fish icons
+            // Load weapon icon and define its frame inline with fish/snail icons
             weaponIcon = Raylib.LoadTexture("sprites/harpoon.png");
-            int weaponFrameX = 10 + (totalPadding) * fishIcons.Count; // Positioned after the last fish icon
+            int weaponFrameX = 10 + (totalPadding) * fishIcons.Count; // Positioned after the last fish/snail icon
             weaponFrameRect = new Rectangle(
                 weaponFrameX,
                 yPosition,
@@ -70,6 +71,10 @@ namespace FishTankSimulator
         public Rectangle WeaponFrameRect
         {
             get { return weaponFrameRect; }
+        }
+        public List<Texture2D> FishIcons
+        {
+            get { return fishIcons; }
         }
 
         public void Draw()
@@ -155,7 +160,8 @@ namespace FishTankSimulator
             Raylib.DrawTexturePro(icon, new Rectangle(0, 0, icon.Width, icon.Height), iconRect, Vector2.Zero, 0f, Color.White);
         }
 
-       public void HandleClick(bool clickConsumed)
+       
+        public void HandleClick(bool clickConsumed)
         {
             // Exit early if the click has already been consumed
             if (clickConsumed)
@@ -173,14 +179,21 @@ namespace FishTankSimulator
                 return;
             }
 
-            // If the weapon frame was not clicked, check the fish frames
+            // If the weapon frame was not clicked, check the fish/snail frames
             for (int i = 0; i < fishIconRects.Count; i++)
             {
                 if (Raylib.IsMouseButtonPressed(MouseButton.Left) &&
                     Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(), fishIconRects[i]))
                 {
-                    // Attempt to buy the fish
-                    TryBuyFish(i);
+                    if (i == fishIcons.Count - 1) // Last index is for the Snail
+                    {
+                        TryBuySnail();
+                    }
+                    else
+                    {
+                        // Attempt to buy the fish
+                        TryBuyFish(i);
+                    }
 
                     // Mark the click as consumed and exit
                     clickConsumed = true;
@@ -188,8 +201,6 @@ namespace FishTankSimulator
                 }
             }
         }
-
-
 
         // Method to attempt to buy a fish
         public bool TryBuyFish(int fishIndex)
@@ -204,6 +215,19 @@ namespace FishTankSimulator
                     return true;
                 }
             }
+            return false;
+        }
+
+        public bool TryBuySnail()
+        {
+            int snailCost = fishCosts[^1]; // Last cost in the list is for Snail
+            if (goldAmount >= snailCost)
+            {
+                goldAmount -= snailCost;
+                Console.WriteLine("Snail purchased!");
+                return true;
+            }
+            Console.WriteLine("Not enough gold to buy Snail!");
             return false;
         }
 

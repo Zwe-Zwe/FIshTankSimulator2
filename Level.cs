@@ -1,59 +1,52 @@
 using System;
+using System.Numerics;
 
-namespace FishTankSimulator
-{
-    public class Level
-    {
-        private float _predatorMultiplier;
-        private float _tankMaxCapacity;
-        private float _unlockedSpecies;
-        private Fish _requiredSpecies;
-        private float _requiredCoinBalance;
-        private int _currentLevel;
-        private float _timeLimit;
-        private int _foodCountPerSecond;
-        private int _maxFoodLevel;
-        private int _maxSnailLevel;
-
-        public Level(int currentLevel)
-        {
-            _currentLevel = currentLevel;
-            LevelUpReset();
+namespace FishTankSimulator{
+    public class Level{
+        private int gameLevel;
+        private int snailLevel;
+        private int foodLevel;
+        private int foodCountLevel;
+        private int weaponLevel;
+        private int weaponCountLevel;
+        private int tankLevel;
+        public Level(){
+            gameLevel = 1;
+            snailLevel = 1;
+            foodLevel = 1;
+            foodCountLevel = 1;
+            weaponLevel = 1;
+            weaponCountLevel = 1;
+            tankLevel = 1;
         }
-
-        public int CurrentLevel
-        {
-            get => _currentLevel;
-            private set => _currentLevel = value;
+        public int GameLevel{
+            get { return gameLevel; }
+            set { gameLevel = value; }
         }
-
-        public float TankMaxCapacity => _tankMaxCapacity;
-        public float TimeLimit => _timeLimit;
-
-        public void LevelUpReset()
-        {
-            _predatorMultiplier = 1 + (_currentLevel * 0.1f);
-            _tankMaxCapacity = 10 + (_currentLevel * 2);
-            _unlockedSpecies = _currentLevel; // New species unlocked every level
-            _requiredCoinBalance = _currentLevel * 100;
-            _timeLimit = 60 + (_currentLevel * 15); // 1-minute base + 15 seconds per level
-            _foodCountPerSecond = Math.Min(5, _currentLevel); // Max limit of 5
-            _maxFoodLevel = Math.Min(10, _currentLevel);
-            _maxSnailLevel = Math.Min(5, _currentLevel);
+        public int SnailLevel{
+            get { return snailLevel; }
+            set { snailLevel = value; }
         }
-
-        public bool LevelUp()
-        {
-            // Check if level goals are met
-            if (_requiredCoinBalance <= 0) // Add actual condition
-            {
-                _currentLevel++;
-                LevelUpReset();
-                return true;
-            }
-            return false;
+        public int FoodLevel{
+            get { return foodLevel; }
+            set { foodLevel = value; }
         }
-
-        public bool Lost => _timeLimit <= 0;
+        public int FoodCountLevel{
+            get { return foodCountLevel; }
+            set { foodCountLevel = value; }
+        }
+        public int WeaponLevel{
+            get { return weaponLevel; }
+            set { weaponLevel = value; }
+        }
+        public int WeaponCountLevel{
+            get { return weaponCountLevel; }
+            set { weaponCountLevel = value; }
+        }
+        public int TankLevel{
+            get { return tankLevel; }
+            set { tankLevel = value; }
+        }
+        
     }
 }

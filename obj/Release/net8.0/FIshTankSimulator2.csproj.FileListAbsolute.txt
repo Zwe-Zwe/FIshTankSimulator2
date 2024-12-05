@@ -952,3 +952,4 @@ D:\Y1 S1 2024\COS20007\FIshTankSimulator2\obj\Release\net8.0\refint\FIshTankSimu
 D:\Y1 S1 2024\COS20007\FIshTankSimulator2\obj\Release\net8.0\FIshTankSimulator2.pdb
 D:\Y1 S1 2024\COS20007\FIshTankSimulator2\obj\Release\net8.0\FIshTankSimulator2.genruntimeconfig.cache
 D:\Y1 S1 2024\COS20007\FIshTankSimulator2\obj\Release\net8.0\ref\FIshTankSimulator2.dll
+D:\Y1 S1 2024\COS20007\FIshTankSimulator2\obj\Release\net8.0\FIshTankSimulator2.sourcelink.json
