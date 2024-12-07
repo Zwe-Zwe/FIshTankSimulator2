@@ -10,8 +10,6 @@ namespace FishTankSimulator
         private float damage;
         private int cost;
         private bool isActived;
-        private float stunDuration;
-
         // Effect state for drawing
         private bool isEffectActive;
         private Vector2 effectPosition;
@@ -22,10 +20,7 @@ namespace FishTankSimulator
 
         public Weapon()
         {
-            damage = 20;
-            cost = 10;
             isActived = false;
-            stunDuration = 0.7f;
             // Initialize effect state
             isEffectActive = false;
             effectRadius = 0;
@@ -44,12 +39,14 @@ namespace FishTankSimulator
 
         public void Attack(PredatorFish shark)
         {
-            shark.GetAttacked(damage, stunDuration);
+            shark.GetAttacked(damage);
         }
 
         
-        public void HandleWeaponEffect(Vector2? startPosition, float deltaTime)
+        public void HandleWeaponEffect(Vector2? startPosition, float deltaTime, Level _level)
         {
+            damage = 40 + ((_level.WeaponLevel - 1) * 10);
+            cost = 20 + ((_level.WeaponLevel - 1) * 5);
             // Start the effect if a position is provided
             if (startPosition.HasValue)
             {

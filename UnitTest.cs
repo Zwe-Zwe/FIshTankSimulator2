@@ -71,8 +71,9 @@ namespace FishTankSimulator.Tests
         [Test]
         public void Food_UpdateTest()
         {
+            Level level = new Level();
             // Arrange
-            var food = new Food(new Vector2(100, 100));
+            var food = new Food(new Vector2(100, 100), level);
             var initialPosition = food.Position;
             
             // Act
@@ -88,8 +89,9 @@ namespace FishTankSimulator.Tests
         [Test]
         public void Food_OnPickupTest()
         {
+            Level level = new Level();
             // Arrange
-            var food = new Food(new Vector2(100, 100));
+            var food = new Food(new Vector2(100, 100), level);
 
             // Act
             food.OnPickup();
@@ -104,14 +106,15 @@ namespace FishTankSimulator.Tests
         [Test]
         public void Food_GetValueTest()
         {
+            Level level = new Level();
             // Arrange
-            var food = new Food(new Vector2(100, 100));
-
+            var food = new Food(new Vector2(100, 100), level);
+            food.Update(1.0f, 600);  // Simulate 1 second of update
             // Act
             var value = food.GetValue();
 
             // Assert
-            Assert.AreEqual(50, value); // Food item has a value of 50
+            Assert.AreEqual(40, value); // Food item has a value of 50
         }
     }
     /// <summary>

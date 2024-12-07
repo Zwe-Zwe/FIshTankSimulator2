@@ -6,20 +6,21 @@ namespace FishTankSimulator
 {
     public class Game
     {
+        private Level level;
+        private LevelManagement levelManagement;
         private int _windowWidth;
         private int _windowHeight;
         private Menu _menu;
         private Shop _shop;
         private Tank _tank;
         private Weapon _weapon;
+        private Upgrade upgrade;
         private Texture2D _tankBackground;
         private Rectangle _srcRect;
         private Rectangle _destRect;
         private Vector2 _origin;
         private bool _inGame = false;
         private bool _clickConsumed = false;
-
-
         public Game(int windowWidth, int windowHeight)
         {
             Raylib.InitWindow(windowWidth, windowHeight, "Fish Tank Simulator");
@@ -27,11 +28,13 @@ namespace FishTankSimulator
 
             _windowWidth = windowWidth;
             _windowHeight = windowHeight;
-
-            _menu = new Menu();
+            level = new Level();
             _weapon = new Weapon();
-            _shop = new Shop(3000, _weapon);
-            _tank = new Tank(_shop);
+            _shop = new Shop(_weapon, level);
+            levelManagement = new LevelManagement(level, _shop);
+            _menu = new Menu();
+            upgrade = new Upgrade(windowWidth, windowHeight, levelManagement, level);
+            _tank = new Tank(_shop, level, upgrade);
             _tankBackground = Raylib.LoadTexture("sprites/tank.png");
             if (_tankBackground.Id == 0)
             {
@@ -42,7 +45,7 @@ namespace FishTankSimulator
             _origin = new Vector2(0, 0);
         }
 
-        public void Run()
+        public void Run(int windowWidth)
         {
             while (!Raylib.WindowShouldClose())
             {
@@ -52,7 +55,7 @@ namespace FishTankSimulator
                 }
                 else
                 {
-                    HandleGame();
+                    HandleGame(windowWidth);
                 }
             }
 
@@ -78,7 +81,7 @@ namespace FishTankSimulator
         }
 
         // In Game.HandleGame()
-        private void HandleGame()
+        private void HandleGame(int windowWidth)
         {
             float deltaTime = Raylib.GetFrameTime();
 
@@ -90,7 +93,7 @@ namespace FishTankSimulator
             if (clickedFishIndex != null)
             {
                 int fishIndex = clickedFishIndex.Value;
-                if (_tank.TryBuyFish(fishIndex))
+                if (_tank.TryBuyFish(fishIndex, _windowWidth, _windowHeight))
                 {
                     Console.WriteLine($"Fish bought: {_shop.GetFishName(fishIndex)}");
                     _clickConsumed = true; // Mark the click as consumed for buying fish
@@ -104,7 +107,7 @@ namespace FishTankSimulator
             Raylib.DrawTexturePro(_tankBackground, _srcRect, _destRect, _origin, 0.0f, Color.White);
 
             _shop.Draw();
-            _tank.Draw(deltaTime);
+            _tank.Draw(deltaTime, windowWidth);
 
             Raylib.EndDrawing();
         }

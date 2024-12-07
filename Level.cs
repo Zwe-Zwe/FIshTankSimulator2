@@ -9,15 +9,19 @@ namespace FishTankSimulator{
         private int foodCountLevel;
         private int weaponLevel;
         private int weaponCountLevel;
-        private int tankLevel;
+        private int maxFish;
+        private int maxSnail;
+        private int money;
         public Level(){
             gameLevel = 1;
             snailLevel = 1;
             foodLevel = 1;
-            foodCountLevel = 1;
             weaponLevel = 1;
+            maxFish = 5;
+            maxSnail = 0;
+            money = 30000;
+            foodCountLevel = 1;
             weaponCountLevel = 1;
-            tankLevel = 1;
         }
         public int GameLevel{
             get { return gameLevel; }
@@ -31,22 +35,30 @@ namespace FishTankSimulator{
             get { return foodLevel; }
             set { foodLevel = value; }
         }
-        public int FoodCountLevel{
-            get { return foodCountLevel; }
-            set { foodCountLevel = value; }
-        }
         public int WeaponLevel{
             get { return weaponLevel; }
             set { weaponLevel = value; }
+        }
+        public int MaxFish{
+            get { return maxFish; }
+            set { maxFish = value; }
+        }
+        public int MaxSnail{
+            get { return maxSnail; }
+            set { maxSnail = value; }
+        }
+        public int Money{
+            get { return money; }
+            set { money = value; }
+        }
+        public int FoodCountLevel{
+            get { return foodCountLevel; }
+            set { foodCountLevel = value; }
         }
         public int WeaponCountLevel{
             get { return weaponCountLevel; }
             set { weaponCountLevel = value; }
         }
-        public int TankLevel{
-            get { return tankLevel; }
-            set { tankLevel = value; }
-        }
-        
+
     }
 }

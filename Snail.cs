@@ -9,15 +9,15 @@ namespace FishTankSimulator
         private float bottomMargin; // Distance from the bottom of the tank
         private float collectionRange; // Range within which the snail can collect coins
 
-        public Snail(Tank tank)
+        public Snail(Tank tank, int windowHeight, float startPosition)
             : base(tank)
         {
             bottomMargin = 70f;
             collectionRange = 50f;
 
             // Set position to the bottom of the tank
-            Position = new Vector2(720, 1080 - bottomMargin); // Start at bottom-left
-            Speed = new Vector2(50, 0); // Horizontal speed
+            Position = new Vector2(startPosition, windowHeight - bottomMargin); // Start at bottom-left
+            Speed = new Vector2(100, 0); // Horizontal speed
             IsMovingLeft = true; // Starts moving left by default
 
             // Initialize animators with textures and frame durations
@@ -27,27 +27,68 @@ namespace FishTankSimulator
 
         public override void Update(float deltaTime, int windowWidth, int windowHeight)
         {
-            // Handle horizontal movement
-            if (IsMovingLeft)
+            Coin closestCoin = null;
+            float closestDistance = float.MaxValue;
+            float movementThreshold = 5f; // Small threshold to prevent jittering
+
+            // Find the nearest coin
+            foreach (Coin coin in Tank.CoinList)
             {
-                Position = new Vector2(Position.X - Speed.X * deltaTime, Position.Y);
-                if (Position.X <= 0) // Bounce off the left wall
+                float distance = Vector2.Distance(coin.Position, Position);
+                if (distance < closestDistance)
                 {
-                    IsMovingLeft = false;
+                    closestCoin = coin;
+                    closestDistance = distance;
+                }
+            }
+
+            // Move toward the nearest coin, no matter the distance
+            if (closestCoin != null)
+            {
+                float coinX = closestCoin.Position.X;
+
+                // Check if the snail needs to move left or right, avoiding jitter near the coin
+                if (Math.Abs(coinX - Position.X) > movementThreshold)
+                {
+                    if (coinX < Position.X) // Coin is to the left
+                    {
+                        Position = new Vector2(Position.X - Speed.X * deltaTime, Position.Y);
+                        IsMovingLeft = true;
+                    }
+                    else if (coinX > Position.X) // Coin is to the right
+                    {
+                        Position = new Vector2(Position.X + Speed.X * deltaTime, Position.Y);
+                        IsMovingLeft = false;
+                    }
                 }
             }
             else
             {
-                Position = new Vector2(Position.X + Speed.X * deltaTime, Position.Y);
-                if (Position.X >= windowWidth) // Bounce off the right wall
+                // Default horizontal bouncing movement if no coins exist
+                if (IsMovingLeft)
                 {
-                    IsMovingLeft = true;
+                    Position = new Vector2(Position.X - Speed.X * deltaTime, Position.Y);
+                    if (Position.X <= 0) // Bounce off the left wall
+                    {
+                        IsMovingLeft = false;
+                    }
+                }
+                else
+                {
+                    Position = new Vector2(Position.X + Speed.X * deltaTime, Position.Y);
+                    if (Position.X >= windowWidth) // Bounce off the right wall
+                    {
+                        IsMovingLeft = true;
+                    }
                 }
             }
 
-            // Collect coins at the bottom
+            // Collect coins if they are within range
             CollectCoins();
         }
+
+
+
 
         public override void Draw(float deltaTime)
         {
@@ -72,14 +113,26 @@ namespace FishTankSimulator
 
         private void CollectCoins()
         {
-            // Check and collect coins near the snail's position
+            Coin closestCoin = null;
+            float closestDistance = float.MaxValue;
+
+            // Find the closest coin within the collection range
             foreach (Coin coin in Tank.CoinList)
             {
-                if (Vector2.Distance(coin.Position, Position) <= collectionRange)
+                float distance = Vector2.Distance(coin.Position, Position);
+                if (distance <= collectionRange && distance < closestDistance)
                 {
-                    Tank.CollectCoin(coin); // Notify the tank to handle coin collection
+                    closestCoin = coin;
+                    closestDistance = distance;
                 }
             }
+
+            // Collect the closest coin if it exists
+            if (closestCoin != null)
+            {
+                Tank.CollectCoin(closestCoin);
+            }
         }
+
     }
 }

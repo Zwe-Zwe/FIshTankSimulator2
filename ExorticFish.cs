@@ -66,7 +66,7 @@ namespace FishTankSimulator
 
             if (isReturning)
             {
-                ReturnToOrigin(deltaTime, windowWidth);
+                ReturnToOrigin(deltaTime, windowWidth, windowHeight);
                 return;
             }
 
@@ -111,7 +111,7 @@ namespace FishTankSimulator
             Tank.AddTreasure(treasure); // Assuming AddTreasure is implemented in Tank
         }
 
-        private void ReturnToOrigin(float deltaTime, int windowWidth)
+        private void ReturnToOrigin(float deltaTime, int windowWidth, int windowHeight)
         {
             Position += Speed * speedMultiplier * deltaTime;
 
@@ -120,7 +120,7 @@ namespace FishTankSimulator
             {
                 ResetAppearanceTimer(); // Reset for next appearance
                 activeDuration = Raylib.GetRandomValue(20, 30); // Reset active duration
-                Position = GetRandomPosition(windowWidth); // Reposition off-screen to start
+                Position = GetRandomPosition(windowHeight); // Reposition off-screen to start
             }
         }
 
@@ -137,9 +137,9 @@ namespace FishTankSimulator
             }
         }
 
-        private Vector2 GetRandomPosition(int windowWidth)
+        private Vector2 GetRandomPosition(int windowHeight)
         {
-            int y = Raylib.GetRandomValue(100, 1080 - 100);
+            int y = Raylib.GetRandomValue(100, windowHeight - 100);
             return new Vector2(-100, y); // Start off-screen to the left for next appearance
         }
 

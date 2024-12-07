@@ -15,9 +15,6 @@ namespace FishTankSimulator
         private float eatingTimer = 1f;
         private Animator LeftAnimatorSnapping;
         private Animator RightAnimatorSnapping;
-        private bool isStunned;
-        private float stunTimer;
-        private float stunDuration;
         public event Action<Fish> OnFishEaten;
         
 
@@ -26,9 +23,6 @@ namespace FishTankSimulator
             Position = initialPosition;
             Health = new Health(200f);
             Speed = new Vector2(70, 30); 
-            isStunned = false;
-            stunDuration = 0f;
-            stunTimer = 0f;
             // Load predator textures for swimming
             LeftAnimator = new Animator(LoadTextures("sprites/shark/swim_to_left"), 0.1f);
             RightAnimator = new Animator(LoadTextures("sprites/shark/swim_to_right"), 0.1f);
@@ -54,15 +48,6 @@ namespace FishTankSimulator
         public override void Update(float deltaTime, int windowWidth, int windowHeight)
         {
             
-            // Handle stun logic
-            if (isStunned)
-            {
-                stunTimer += deltaTime;  // Increase the stun timer by deltaTime
-                if (stunTimer >= stunDuration)  // If the stun duration is over
-                {
-                    isStunned = false;  // Remove the stun effect
-                }
-            }
             // Appearance delay logic
             if (appearanceTimer > 0)
             {
@@ -147,9 +132,9 @@ namespace FishTankSimulator
         }
 
 
-        private Vector2 GetRandomPosition(int windowWidth)
+        private Vector2 GetRandomPosition(int windowHeight)
         {
-            int y = Raylib.GetRandomValue(100, 1080 - 100);
+            int y = Raylib.GetRandomValue(100, windowHeight - 100);
             return new Vector2(-100, y);
         }
 
@@ -221,12 +206,10 @@ namespace FishTankSimulator
             }
         }
 
-        public void GetAttacked(float damage, float stunTime)
+        public void GetAttacked(float damage)
         {
             Health.Reduce(damage);
-            isStunned = true;
-            stunDuration = stunTime;
-            stunTimer = 0f;
+            Console.WriteLine("Predator fish attacked! Damage: " + damage);
         }
 
 

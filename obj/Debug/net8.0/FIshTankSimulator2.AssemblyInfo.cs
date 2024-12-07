@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("FIshTankSimulator2")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+8be2c7c8dc357c0ce72c63943247e2eaad6e2006")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+002d1db4344e91d20d1457b74b1a8d07e5fcd601")]
 [assembly: System.Reflection.AssemblyProductAttribute("FIshTankSimulator2")]
 [assembly: System.Reflection.AssemblyTitleAttribute("FIshTankSimulator2")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

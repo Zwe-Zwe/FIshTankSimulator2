@@ -9,13 +9,11 @@ namespace FishTankSimulator
     {
  
         private float coinDropTimer;
-
         private Growth growth;
-    
         private Food targetFood;
         private CoinFishType fishType;
-
         public event Action<Coin> OnCoinDropped;
+        private const int healthReduceRate = 4;
 
         public CoinFish(Vector2 initialPosition, CoinFishType type, Tank tank) : base(tank)
         {
@@ -59,9 +57,9 @@ namespace FishTankSimulator
             // Adjust drop rate based on fish type
             return fishType switch
             {
-                CoinFishType.Guppy => Raylib.GetRandomValue(7, 13),      // Guppy drops coins more often
-                CoinFishType.Snapper => Raylib.GetRandomValue(6, 10),   // Snapper has a moderate drop rate
-                CoinFishType.Flounder => Raylib.GetRandomValue(8, 14),  // Flounder drops coins less often
+                CoinFishType.Guppy => Raylib.GetRandomValue(8, 14),      // Guppy drops coins more often
+                CoinFishType.Snapper => Raylib.GetRandomValue(6, 12),   // Snapper has a moderate drop rate
+                CoinFishType.Flounder => Raylib.GetRandomValue(4, 10),  // Flounder drops coins less often
                 _ => Raylib.GetRandomValue(7, 13)
             };
         }
@@ -84,7 +82,7 @@ namespace FishTankSimulator
             }
 
             // Decrease health over time
-            Health.Reduce(4f * deltaTime);
+            Health.Reduce(healthReduceRate * deltaTime);
 
             // Hunger logic: seek food
             if (Health.Current < Health.Max / 2)
