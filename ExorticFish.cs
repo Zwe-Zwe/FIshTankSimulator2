@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Numerics;
 using Raylib_cs;
 
@@ -8,161 +7,167 @@ namespace FishTankSimulator
     public class ExoticFish : Fish
     {
         private float appearanceTimer;
-        private float activeDuration; // Duration the Exotic Fish stays in the tank
-        private bool isReturning;     // Indicates if the fish is leaving the tank
-        private float speedMultiplier;
-        private float treasureDropInterval;
-        private float treasureDropTimer;
-        private event Action<Treasure> onTreasureDropped;
+        private float activeDuration;
+        private bool isLeaving;
+        private bool hasDroppedTreasure;
+        private Animator LeftAnimator;
+        private Animator RightAnimator;
 
-        public ExoticFish(Vector2 initialPosition) : base()
+        public event Action<Treasure> OnTreasureDropped;
+
+        public ExoticFish(Vector2 initialPosition, Tank tank) : base(tank)
         {
             Position = initialPosition;
-            speedMultiplier = 3.0f; // Exotic fish is faster
-            Health = new Health(100f); // Exotic fish has moderate health
+            Speed = new Vector2(700, 100); // Exotic fish move slower and more gracefully
+            LeftAnimator = new Animator(LoadTextures("sprites/red/swim_to_left"), 0.1f);
+            RightAnimator = new Animator(LoadTextures("sprites/red/swim_to_right"), 0.1f);
 
-            // Load exotic fish textures
-            LeftAnimator = new Animator(LoadTextures("sprites/exotic/swim_to_left"), 0.1f);
-            RightAnimator = new Animator(LoadTextures("sprites/exotic/swim_to_right"), 0.1f);
+            IsMovingLeft = Speed.X < 0;
 
-            // Set random appearance interval and active duration
             ResetAppearanceTimer();
-            activeDuration = Raylib.GetRandomValue(20, 30); // Active duration for 2 rounds (~20-30s)
-            treasureDropInterval = 5f; // Drops treasure every 5 seconds
-            treasureDropTimer = treasureDropInterval;
+            activeDuration = 10f; // Exotic fish stays for 5 seconds
+            hasDroppedTreasure = false;
         }
 
-        public float ActiveDuration
-        {
-            get { return activeDuration; }
-        }
-        public float TreasureDropInterval
-        {
-            get { return treasureDropInterval; }
-        }
-        public float TreasureDropTimer
-        {
-            get { return treasureDropTimer; }
-        }
-        public event Action<Treasure> OnTreasureDropped
-        {
-            add { onTreasureDropped += value; }
-            remove { onTreasureDropped -= value; }
-        }
         private void ResetAppearanceTimer()
         {
-            appearanceTimer = Raylib.GetRandomValue(60, 100); // Random delay before appearing
-            isReturning = false; // Reset return state
+            appearanceTimer = Raylib.GetRandomValue(3, 8); // Random delay before appearing
+            isLeaving = false;
         }
 
         public override void Update(float deltaTime, int windowWidth, int windowHeight)
         {
-            // Countdown until the exotic fish appears
+            // Appearance delay logic
             if (appearanceTimer > 0)
             {
                 appearanceTimer -= deltaTime;
                 return;
             }
 
-            if (isReturning)
+            // Leaving the tank logic
+            if (isLeaving)
             {
-                ReturnToOrigin(deltaTime, windowWidth, windowHeight);
+                LeaveTank(deltaTime, windowWidth);
                 return;
             }
 
-            activeDuration -= deltaTime;
-
-            // Exotic fish leaves after active duration
-            if (activeDuration <= 0)
+            // Drop treasure at the midpoint of the active duration
+            if (!hasDroppedTreasure && activeDuration <= 5f) // Halfway through 10 seconds
             {
-                isReturning = true;
-                SetReturnDirection(windowWidth);
-                return;
+                DropTreasure();
             }
 
-            Position += Speed * speedMultiplier * deltaTime;
+            // Regular movement logic
+            Position += Speed * deltaTime;
 
-            // Bounce off tank walls
-            if (Position.X <= 0 || Position.X + 100 >= windowWidth)
+            // Check for X-axis wall collisions with a threshold
+            const float collisionThreshold = 10f;
+
+            if (Position.X <= collisionThreshold) // Left wall collision
             {
-                Speed = new Vector2(-Speed.X, Speed.Y);
-                IsMovingLeft = Speed.X < 0;
+                Position = new Vector2(collisionThreshold, Position.Y);
+                Speed = new Vector2(Math.Abs(Speed.X), Speed.Y);
+                IsMovingLeft = false;
             }
+            else if (Position.X + 100 >= windowWidth - collisionThreshold) // Right wall collision
+            {
+                Position = new Vector2(windowWidth - 100 - collisionThreshold, Position.Y);
+                Speed = new Vector2(-Math.Abs(Speed.X), Speed.Y);
+                IsMovingLeft = true;
+            }
+
+            // Check for Y-axis wall collisions
             if (Position.Y <= 0 || Position.Y + 100 >= windowHeight)
             {
                 Speed = new Vector2(Speed.X, -Speed.Y);
             }
 
-            // Drop treasure periodically
-            treasureDropTimer -= deltaTime;
-            if (treasureDropTimer <= 0)
+            // Reduce active duration
+            if (activeDuration > 0)
             {
-                DropTreasure();
-                treasureDropTimer = treasureDropInterval; // Reset timer for next drop
+                activeDuration -= deltaTime;
+            }
+            else if (!isLeaving)
+            {
+                isLeaving = true;
+                SetLeaveDirection(windowWidth);
             }
         }
 
-        private void DropTreasure()
+        private void LeaveTank(float deltaTime, int windowWidth)
         {
-            Vector2 treasurePosition = Position;
-            //TreasureType treasureType = (TreasureType)Raylib.GetRandomValue(0, Enum.GetValues(typeof(TreasureType)).Length - 1);
-            TreasureType treasureType = TreasureType.Ruby;
-            Treasure treasure = new Treasure(treasurePosition, treasureType);
-            Tank.AddTreasure(treasure); // Assuming AddTreasure is implemented in Tank
-        }
-
-        private void ReturnToOrigin(float deltaTime, int windowWidth, int windowHeight)
-        {
-            Position += Speed * speedMultiplier * deltaTime;
+            Position += Speed * deltaTime;
 
             // Check if the fish has exited the screen
-            if (Position.X < -100 || Position.X > windowWidth + 100)
+            if (Position.X < -200 || Position.X > windowWidth + 200)
             {
-                ResetAppearanceTimer(); // Reset for next appearance
-                activeDuration = Raylib.GetRandomValue(20, 30); // Reset active duration
-                Position = GetRandomPosition(windowHeight); // Reposition off-screen to start
+                ResetAppearanceTimer();
+                activeDuration = 20f;
+                Position = GetRandomPosition(windowWidth);
+                hasDroppedTreasure = false;
             }
+
+            // Ensure the direction is updated continuously while leaving
+            IsMovingLeft = Speed.X < 0;
         }
 
-        private void SetReturnDirection(int windowWidth)
+        private void SetLeaveDirection(int windowWidth)
         {
-            // Choose a direction to exit (left or right)
             if (Position.X < windowWidth / 2)
             {
-                Speed = new Vector2(-300, 0); // Exit to the left faster
+                Speed = new Vector2(-Math.Abs(Speed.X), 0); // Maintain original speed magnitude
             }
             else
             {
-                Speed = new Vector2(300, 0); // Exit to the right faster
+                Speed = new Vector2(Math.Abs(Speed.X), 0); // Maintain original speed magnitude
             }
+
+            IsMovingLeft = Speed.X < 0;
         }
 
         private Vector2 GetRandomPosition(int windowHeight)
         {
             int y = Raylib.GetRandomValue(100, windowHeight - 100);
-            return new Vector2(-100, y); // Start off-screen to the left for next appearance
+            return new Vector2(-100, y);
+        }
+
+        private void DropTreasure()
+        {
+            if (hasDroppedTreasure) return;
+            Treasure treasure = new Treasure(Position);
+            OnTreasureDropped?.Invoke(treasure);
+            hasDroppedTreasure = true;
         }
 
         public override void Draw(float deltaTime)
         {
-            if (appearanceTimer > 0)
-            {
-                return; // Exotic fish is not visible yet
-            }
+            if (appearanceTimer > 0) return;
+
+            float scale = 0.5f;
 
             Texture2D currentSprite = IsMovingLeft
                 ? LeftAnimator.GetCurrentFrame(deltaTime)
                 : RightAnimator.GetCurrentFrame(deltaTime);
 
             Rectangle srcRect = new Rectangle(0, 0, currentSprite.Width, currentSprite.Height);
-            Rectangle destRect = new Rectangle(Position.X, Position.Y, currentSprite.Width * 0.5f, currentSprite.Height * 0.5f);
+            Rectangle destRect = new Rectangle(
+                (int)Position.X,
+                (int)Position.Y,
+                (int)(currentSprite.Width * scale),
+                (int)(currentSprite.Height * scale)
+            );
 
             Raylib.DrawTexturePro(currentSprite, srcRect, destRect, Vector2.Zero, 0.0f, Color.White);
-
-            // Draw health bar
-            Health.Draw(new Vector2(Position.X, Position.Y - 10), 60, 5);
         }
 
-        
+        public bool IsWithinBounds(Vector2 point)
+        {
+            float width = RightAnimator.GetCurrentFrame(0).Width * 0.5f;
+            float height = RightAnimator.GetCurrentFrame(0).Height * 0.5f;
+
+            Rectangle bounds = new Rectangle(Position.X, Position.Y, width, height);
+
+            return Raylib.CheckCollisionPointRec(point, bounds);
+        }
     }
 }

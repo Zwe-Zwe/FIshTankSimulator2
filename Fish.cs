@@ -18,7 +18,6 @@ namespace FishTankSimulator{
     {
         _tank = tank;
         position = new Vector2(0, 0);
-        speed = new Vector2(70, 30); // Default speed
         isMovingLeft = true;
     }
 

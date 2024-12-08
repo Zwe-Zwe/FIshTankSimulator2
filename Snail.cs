@@ -8,16 +8,18 @@ namespace FishTankSimulator
     {
         private float bottomMargin; // Distance from the bottom of the tank
         private float collectionRange; // Range within which the snail can collect coins
+        private float movementSpeed; // Horizontal movement speed
+        private Player _player;
 
-        public Snail(Tank tank, int windowHeight, float startPosition)
+        public Snail(Tank tank, int windowHeight, float startPosition, Player player)
             : base(tank)
         {
             bottomMargin = 70f;
             collectionRange = 50f;
+            _player = player;
 
             // Set position to the bottom of the tank
             Position = new Vector2(startPosition, windowHeight - bottomMargin); // Start at bottom-left
-            Speed = new Vector2(100, 0); // Horizontal speed
             IsMovingLeft = true; // Starts moving left by default
 
             // Initialize animators with textures and frame durations
@@ -27,6 +29,8 @@ namespace FishTankSimulator
 
         public override void Update(float deltaTime, int windowWidth, int windowHeight)
         {
+            movementSpeed = 100f + (float)(28.57 * (_player.SnailLevel - 1));
+            Speed = new Vector2(movementSpeed, 0); // Horizontal speed
             Coin closestCoin = null;
             float closestDistance = float.MaxValue;
             float movementThreshold = 5f; // Small threshold to prevent jittering

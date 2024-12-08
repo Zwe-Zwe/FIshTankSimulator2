@@ -21,10 +21,10 @@ namespace FishTankSimulator
         private Action[] itemActions;
         private bool isActive;
         private LevelManagement _levelManagement;
-        private Level _level;
+        private Player _player;
         private bool isOkButtonClicked;
 
-        public Upgrade(int screenWidth, int screenHeight, LevelManagement levelManagement, Level level)
+        public Upgrade(int screenWidth, int screenHeight, LevelManagement levelManagement, Player player)
         {
             // UI dimensions
             uiWidth = screenWidth * 0.8f;
@@ -35,7 +35,7 @@ namespace FishTankSimulator
             itemSize = (uiWidth / ITEMS_PER_ROW) * 0.6f; // Slightly larger items
             itemSpacing = 15; // Increased spacing
             _levelManagement = levelManagement;
-            _level = level;
+            _player = player;
             isOkButtonClicked = false;
             // Load textures
             itemTextures = new Texture2D[ITEM_COUNT];
@@ -125,28 +125,28 @@ public void Draw(int windowWidth)
         switch (i)
         {
             case 0:
-                currentLevel = _level.GameLevel;
-                cost = 100 + (currentLevel * 50);
+                currentLevel = Player.GameLevel;
+                cost = _levelManagement.GetGameLevelUpdateCost();
                 break;
             case 1:
-                currentLevel = _level.FoodLevel;
-                cost = 80 + (currentLevel * 40);
+                currentLevel = _player.FoodLevel;
+                cost = _levelManagement.GetFoodUpdateCost();
                 break;
             case 2:
-                currentLevel = _level.WeaponLevel;
-                cost = 120 + (currentLevel * 60);
+                currentLevel = _player.WeaponLevel;
+                cost = _levelManagement.GetWeaponUpdateCost();
                 break;
             case 3:
-                currentLevel = _level.FoodCountLevel;
-                cost = 70 + (currentLevel * 30);
+                currentLevel = _player.FoodCountLevel;
+                cost = _levelManagement.GetFoodCountUpdateCost();
                 break;
             case 4:
-                currentLevel = _level.WeaponCountLevel;
-                cost = 150 + (currentLevel * 75);
+                currentLevel = _player.WeaponCountLevel;
+                cost = _levelManagement.GetWeaponCountUpdateCost();
                 break;
             case 5:
-                currentLevel = _level.SnailLevel;
-                cost = 90 + (currentLevel * 45);
+                currentLevel = _player.SnailLevel;
+                cost = _levelManagement.GetSnailUpdateCost();
                 break;
         }
 

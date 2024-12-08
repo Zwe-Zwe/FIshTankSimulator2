@@ -6,8 +6,8 @@ namespace FishTankSimulator
     {
         public static void Main()
         {
-            int windowWidth = 2560;
-            int windowHeight = 1440;
+            int windowWidth = 1920;
+            int windowHeight = 1080;
 
             // Create and run the game
             Game game = new Game(windowWidth, windowHeight);

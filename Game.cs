@@ -6,7 +6,7 @@ namespace FishTankSimulator
 {
     public class Game
     {
-        private Level level;
+        private Player player;
         private LevelManagement levelManagement;
         private int _windowWidth;
         private int _windowHeight;
@@ -21,6 +21,7 @@ namespace FishTankSimulator
         private Vector2 _origin;
         private bool _inGame = false;
         private bool _clickConsumed = false;
+        public static bool isQuitClicked = false;
         public Game(int windowWidth, int windowHeight)
         {
             Raylib.InitWindow(windowWidth, windowHeight, "Fish Tank Simulator");
@@ -28,13 +29,13 @@ namespace FishTankSimulator
 
             _windowWidth = windowWidth;
             _windowHeight = windowHeight;
-            level = new Level();
+            player = new Player();
             _weapon = new Weapon();
-            _shop = new Shop(_weapon, level);
-            levelManagement = new LevelManagement(level, _shop);
+            _shop = new Shop(_weapon, player);
+            levelManagement = new LevelManagement(player, _shop);
             _menu = new Menu();
-            upgrade = new Upgrade(windowWidth, windowHeight, levelManagement, level);
-            _tank = new Tank(_shop, level, upgrade);
+            upgrade = new Upgrade(windowWidth, windowHeight, levelManagement, player);
+            _tank = new Tank(_shop, player, upgrade, windowWidth, windowHeight);
             _tankBackground = Raylib.LoadTexture("sprites/tank.png");
             if (_tankBackground.Id == 0)
             {
@@ -45,9 +46,14 @@ namespace FishTankSimulator
             _origin = new Vector2(0, 0);
         }
 
+        public static bool IsQuitClicked{
+            get { return isQuitClicked; }
+            set { isQuitClicked = value; }
+        }
+       
         public void Run(int windowWidth)
         {
-            while (!Raylib.WindowShouldClose())
+            while (!Raylib.WindowShouldClose() && !isQuitClicked)
             {
                 if (!_inGame)
                 {

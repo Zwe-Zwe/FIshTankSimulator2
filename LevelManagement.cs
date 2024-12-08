@@ -5,29 +5,38 @@ namespace FishTankSimulator
 {
     public class LevelManagement
     {
-        private Level _level;
+        private Player _player;
         private int maxGameLevel;
         private int maxFoodCountLevel;
         private Shop _shop;
         private int maxWeaponCountLevel;
-
-        public LevelManagement(Level level, Shop shop)
+        public LevelManagement(Player player, Shop shop)
         {
             _shop = shop;
-            _level = level;
+            _player = player;
             maxGameLevel = 10;
-            Console.WriteLine("LevelManagement initialized with Game Level: " + _level.GameLevel);
+            Console.WriteLine("LevelManagement initialized with Game Level: " + Player.GameLevel);
         }
 
         public void LevelUpGameLevel()
         {
-            if (_level.GameLevel < maxGameLevel)
+            if (Player.GameLevel < maxGameLevel)
             {
-                _level.GameLevel++;
-                Console.WriteLine("Game Level upgraded to: " + _level.GameLevel);
-                UpdateMaxSnail();
-                UpdateMaxFish();
-                _shop.UpdateShopItems();
+                // Check if the player has enough money
+                var cost = GetGameLevelUpdateCost();
+                if (_player.Money >= cost)
+                {
+                    _player.Money -= cost;
+                    Player.GameLevel++;
+                    Console.WriteLine("Game Level upgraded to: " + Player.GameLevel);
+                    UpdateMaxSnail();
+                    UpdateMaxFish();
+                    _shop.UpdateShopItems();
+                }
+                else
+                {
+                    Console.WriteLine("Not enough money to upgrade Game Level.");
+                }
             }
             else
             {
@@ -37,10 +46,20 @@ namespace FishTankSimulator
 
         public void LevelUpSnailLevel()
         {
-            if (_level.SnailLevel < GetMaxSnailLevel())
+            if (_player.SnailLevel < GetMaxSnailLevel())
             {
-                _level.SnailLevel++;
-                Console.WriteLine("Snail Level upgraded to: " + _level.SnailLevel);
+                // Check if the player has enough money
+                var cost = GetSnailUpdateCost();
+                if (_player.Money >= cost)
+                {
+                    _player.Money -= cost;
+                    _player.SnailLevel++;
+                    Console.WriteLine("Snail Level upgraded to: " + _player.SnailLevel);
+                }
+                else
+                {
+                    Console.WriteLine("Not enough money to upgrade Snail Level.");
+                }
             }
             else
             {
@@ -50,10 +69,20 @@ namespace FishTankSimulator
 
         public void LevelUpFoodLevel()
         {
-            if (_level.FoodLevel < _level.GameLevel)
+            if (_player.FoodLevel < Player.GameLevel)
             {
-                _level.FoodLevel++;
-                Console.WriteLine("Food Level upgraded to: " + _level.FoodLevel);
+                // Check if the player has enough money
+                var cost = GetFoodUpdateCost();
+                if (_player.Money >= cost)
+                {
+                    _player.Money -= cost;
+                    _player.FoodLevel++;
+                    Console.WriteLine("Food Level upgraded to: " + _player.FoodLevel);
+                }
+                else
+                {
+                    Console.WriteLine("Not enough money to upgrade Food Level.");
+                }
             }
             else
             {
@@ -63,10 +92,20 @@ namespace FishTankSimulator
 
         public void LevelUpWeaponLevel()
         {
-            if (_level.WeaponLevel < _level.GameLevel)
+            if (_player.WeaponLevel < Player.GameLevel)
             {
-                _level.WeaponLevel++;
-                Console.WriteLine("Weapon Level upgraded to: " + _level.WeaponLevel);
+                // Check if the player has enough money
+                var cost = GetWeaponUpdateCost();
+                if (_player.Money >= cost)
+                {
+                    _player.Money -= cost;
+                    _player.WeaponLevel++;
+                    Console.WriteLine("Weapon Level upgraded to: " + _player.WeaponLevel);
+                }
+                else
+                {
+                    Console.WriteLine("Not enough money to upgrade Weapon Level.");
+                }
             }
             else
             {
@@ -76,10 +115,20 @@ namespace FishTankSimulator
 
         public void LevelUpFoodCount()
         {
-            if (_level.FoodCountLevel < GetMaxFoodCountLevel())
+            if (_player.FoodCountLevel < GetMaxFoodCountLevel())
             {
-                _level.FoodCountLevel++;
-                Console.WriteLine("Food Count increased to: " + _level.FoodCountLevel);
+                // Check if the player has enough money
+                var cost = GetFoodCountUpdateCost();
+                if (_player.Money >= cost)
+                {
+                    _player.Money -= cost;
+                    _player.FoodCountLevel++;
+                    Console.WriteLine("Food Count increased to: " + _player.FoodCountLevel);
+                }
+                else
+                {
+                    Console.WriteLine("Not enough money to upgrade Food Count.");
+                }
             }
             else
             {
@@ -89,10 +138,20 @@ namespace FishTankSimulator
 
         public void LevelUpWeaponCount()
         {
-            if (_level.WeaponCountLevel < GetMaxWeaponCountLevel())
+            if (_player.WeaponCountLevel < GetMaxWeaponCountLevel())
             {
-                _level.WeaponCountLevel++;
-                Console.WriteLine("Weapon Count increased to: " + _level.WeaponCountLevel);
+                // Check if the player has enough money
+                var cost = GetWeaponCountUpdateCost();
+                if (_player.Money >= cost)
+                {
+                    _player.Money -= cost;
+                    _player.WeaponCountLevel++;
+                    Console.WriteLine("Weapon Count increased to: " + _player.WeaponCountLevel);
+                }
+                else
+                {
+                    Console.WriteLine("Not enough money to upgrade Weapon Count.");
+                }
             }
             else
             {
@@ -102,22 +161,28 @@ namespace FishTankSimulator
 
         public int GetMaxSnailLevel()
         {
-            int maxSnailLevel = _level.GameLevel;
-            Console.WriteLine("Calculated Max Snail Level: " + maxSnailLevel);
+            if (Player.GameLevel < 3)
+            {
+                Console.WriteLine("Snail upgrades are not available until Game Level 3.");
+                return 0; 
+            }
+
+            int maxSnailLevel = Player.GameLevel - 2;
             return maxSnailLevel;
         }
 
+
         public int GetMaxFoodCountLevel(){
-            if(_level.GameLevel % 2 == 0){
-                return maxFoodCountLevel = _level.GameLevel / 2;
+            if(Player.GameLevel % 2 == 0){
+                return maxFoodCountLevel = Player.GameLevel / 2;
             }
             else{
                 return maxFoodCountLevel;
             }
         }
         public int GetMaxWeaponCountLevel(){
-            if(_level.GameLevel % 2 == 0){
-                return maxWeaponCountLevel = _level.GameLevel / 2;
+            if(Player.GameLevel % 2 == 0){
+                return maxWeaponCountLevel = Player.GameLevel / 2;
             }
             else{
                 return maxWeaponCountLevel;
@@ -126,27 +191,53 @@ namespace FishTankSimulator
 
         private void UpdateMaxSnail()
         {
-            if (_level.GameLevel >= 7)
+            if (Player.GameLevel >= 7)
             {
-                _level.MaxSnail = 2;
+                _player.MaxSnail = 2;
             }
-            else if (_level.GameLevel >= 3)
+            else if (Player.GameLevel >= 3)
             {
-                _level.MaxSnail = 1;
+                _player.MaxSnail = 1;
             }
             else
             {
-                _level.MaxSnail = 0;
+                _player.MaxSnail = 0;
             }
-            Console.WriteLine("Updated Max Snail to: " + _level.MaxSnail);
+            Console.WriteLine("Updated Max Snail to: " + _player.MaxSnail);
         }
-
         private void UpdateMaxFish()
         {
-            _level.MaxFish += 2;
-            Console.WriteLine("Updated Max Fish to: " + _level.MaxFish);
+            _player.MaxFish += 2;
+            Console.WriteLine("Updated Max Fish to: " + _player.MaxFish);
+        }
+        public int GetFoodUpdateCost(){
+            if(_player.FoodLevel <= 5){
+                return 200 * _player.FoodLevel;
+            }
+            else{
+                return 500 * _player.FoodLevel - 1000;
+            }
+        }
+        public int GetWeaponUpdateCost(){
+            if(_player.WeaponLevel <= 5){
+                return 200 * _player.WeaponLevel;
+            }
+            else{
+                return 500 * _player.WeaponLevel - 1000;
+            }
+        } 
+        public int GetFoodCountUpdateCost(){
+            return 400 * (int)Math.Pow(2, _player.FoodCountLevel - 1);
+        }
+        public int GetWeaponCountUpdateCost(){
+            return 400 * (int)Math.Pow(2, _player.WeaponCountLevel - 1);
+        }
+        public int GetGameLevelUpdateCost(){
+            return 2000 + 2000 * (Player.GameLevel - 1);
+        }
+        public int GetSnailUpdateCost(){
+            return 1000 + 1000 * (_player.SnailLevel - 1);
         }
 
-       
     }
 }

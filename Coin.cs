@@ -13,7 +13,7 @@ namespace FishTankSimulator
         private float _frameTime;
         private float _animationTimer;
         private float _lifetime;
-        private const float MaxLifetime = 5.0f;
+        private const float MaxLifetime = 4.0f;
         private bool _isAtBottom;
 
         public Coin(Vector2 position, CoinType type)

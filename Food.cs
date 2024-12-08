@@ -5,12 +5,12 @@ namespace FishTankSimulator
 {
     public class Food : DropItems
     {
-        private Level _level;
+        private Player _player;
         private int nutrientValue;
-        public Food(Vector2 position, Level level)
+        public Food(Vector2 position, Player player)
             : base(position, "sprites/fishfood.png", 100f) // Pass position, texture path, and fall speed to the parent class
         {
-            _level = level;
+            _player = player;
         }
 
         public override void OnPickup()
@@ -22,7 +22,7 @@ namespace FishTankSimulator
         public override void Update(float deltaTime, int windowHeight)
         {
             
-            nutrientValue = 40 + ((_level.FoodLevel - 1) * 5); // Calculate nutrient value based on food level
+            nutrientValue = 40 + ((_player.FoodLevel - 1) * 5); // Calculate nutrient value based on food level
             
             if (!IsActive) return;
 

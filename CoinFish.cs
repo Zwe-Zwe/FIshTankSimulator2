@@ -13,6 +13,7 @@ namespace FishTankSimulator
         private Food targetFood;
         private CoinFishType fishType;
         public event Action<Coin> OnCoinDropped;
+        
         private const int healthReduceRate = 4;
 
         public CoinFish(Vector2 initialPosition, CoinFishType type, Tank tank) : base(tank)
@@ -20,6 +21,7 @@ namespace FishTankSimulator
             Position = initialPosition;
             fishType = type;
             growth = new Growth();
+            Speed = new Vector2(70, 30);
 
             // Set max health based on fish type
             float baseMaxHealth = type switch

@@ -71,9 +71,9 @@ namespace FishTankSimulator.Tests
         [Test]
         public void Food_UpdateTest()
         {
-            Level level = new Level();
+            Player player = new Player();
             // Arrange
-            var food = new Food(new Vector2(100, 100), level);
+            var food = new Food(new Vector2(100, 100), player);
             var initialPosition = food.Position;
             
             // Act
@@ -89,9 +89,9 @@ namespace FishTankSimulator.Tests
         [Test]
         public void Food_OnPickupTest()
         {
-            Level level = new Level();
+            Player player = new Player();
             // Arrange
-            var food = new Food(new Vector2(100, 100), level);
+            var food = new Food(new Vector2(100, 100), player);
 
             // Act
             food.OnPickup();
@@ -106,9 +106,9 @@ namespace FishTankSimulator.Tests
         [Test]
         public void Food_GetValueTest()
         {
-            Level level = new Level();
+            Player player = new Player();
             // Arrange
-            var food = new Food(new Vector2(100, 100), level);
+            var food = new Food(new Vector2(100, 100), player);
             food.Update(1.0f, 600);  // Simulate 1 second of update
             // Act
             var value = food.GetValue();
@@ -130,12 +130,10 @@ namespace FishTankSimulator.Tests
         public void Treasure_UpdateTest()
         {
             // Arrange
-            var treasure = new Treasure(new Vector2(100, 100), TreasureType.Diamond);
+            var treasure = new Treasure(new Vector2(100, 100));
             var initialPosition = treasure.Position;
-            
             // Act
             treasure.Update(1.0f, 600);  // Simulate 1 second of update
-            
             // Assert
             Assert.AreNotEqual(initialPosition, treasure.Position); // The position should have changed
         }
@@ -147,11 +145,9 @@ namespace FishTankSimulator.Tests
         public void Treasure_OnPickupTest()
         {
             // Arrange
-            var treasure = new Treasure(new Vector2(100, 100), TreasureType.Diamond);
-
+            var treasure = new Treasure(new Vector2(100, 100));
             // Act
             treasure.OnPickup();
-
             // Assert
             Assert.IsFalse(treasure.IsActive); // The treasure should be inactive after pickup
         }
@@ -163,7 +159,7 @@ namespace FishTankSimulator.Tests
         public void Treasure_GetValueTest()
         {
             // Arrange
-            var treasure = new Treasure(new Vector2(100, 100), TreasureType.Diamond);
+            var treasure = new Treasure(new Vector2(100, 100));
 
             // Act
             var value = treasure.GetValue();

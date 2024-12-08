@@ -2,8 +2,8 @@ using System;
 using System.Numerics;
 
 namespace FishTankSimulator{
-    public class Level{
-        private int gameLevel;
+    public class Player{
+        private static int gameLevel;
         private int snailLevel;
         private int foodLevel;
         private int foodCountLevel;
@@ -12,18 +12,29 @@ namespace FishTankSimulator{
         private int maxFish;
         private int maxSnail;
         private int money;
-        public Level(){
+        public Player(){
             gameLevel = 1;
             snailLevel = 1;
             foodLevel = 1;
             weaponLevel = 1;
             maxFish = 5;
             maxSnail = 0;
-            money = 30000;
+            money = 3000000;
             foodCountLevel = 1;
             weaponCountLevel = 1;
         }
-        public int GameLevel{
+        public PredatorFishType GetPredatorType(){
+            if(gameLevel <= 3){
+                return PredatorFishType.Small;
+            }
+            else if(gameLevel <= 6){
+                return PredatorFishType.Medium;
+            }
+            else{
+                return PredatorFishType.Big;
+            }
+        }
+        public static int GameLevel{
             get { return gameLevel; }
             set { gameLevel = value; }
         }

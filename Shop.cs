@@ -6,7 +6,7 @@ namespace FishTankSimulator
 {
     public class Shop
     {
-        private Level level;
+        private Player _player;
         private List<Texture2D> fishIcons; // Icons for fish in the shop
         private List<Rectangle> fishIconRects; // Icon positioning
         private List<int> fishCosts; // List to store the cost of each fish
@@ -18,14 +18,18 @@ namespace FishTankSimulator
         private Texture2D weaponIcon; // Icon for the weapon
         private Rectangle weaponFrameRect; // Frame position for the weapon
         private Font customFont = Raylib.LoadFont("font/font.ttf");
+        // Frame and icon sizes (constants for consistency)
+        private const int FrameSize = 90; // Adjusted size for frames
+        private const int IconSize = 70; // Adjusted size for icons
+        private const float ScaleFactor = 0.8f; // Scaling factor for icons
 
         // Fish types
         private List<string> fishNames;
 
-        public Shop(Weapon weaponInstance, Level levelInstance)
+        public Shop(Weapon weaponInstance, Player player)
         {
             weapon = weaponInstance;
-            level = levelInstance;
+            _player = player;
 
             // Load icons for fish and snail
             fishIcons = new List<Texture2D>
@@ -34,14 +38,14 @@ namespace FishTankSimulator
             };
 
             // Add Snapper icon if GameLevel >= 3
-            if (level.GameLevel >= 3)
+            if (Player.GameLevel >= 3)
             {
                 fishIcons.Add(Raylib.LoadTexture("sprites/blue/swim_to_left/1.png")); // Add Snapper icon
                 fishIcons.Add(Raylib.LoadTexture("sprites/shark/swim_to_left/1.png")); // Add Snail icon
             }
 
             // Add Flounder icon if GameLevel >= 6
-            if (level.GameLevel >= 6)
+            if (Player.GameLevel >= 6)
             {
                 fishIcons.Insert(2, Raylib.LoadTexture("sprites/red/swim_to_left/1.png")); // Add Flounder icon at the correct position
             }
@@ -56,29 +60,11 @@ namespace FishTankSimulator
             fishNames = new List<string> { "Guppy", "Snapper", "Flounder", "Snail" }; // Last name is Snail
 
             // Define positions for the icons
-            fishIconRects = new List<Rectangle>();
-            int frameSize = iconSize + 100; // Frame is slightly larger than the icon
-            int totalPadding = padding + frameSize; // Spacing considers frame size and padding
-
-            for (int i = 0; i < fishIcons.Count; i++)
-            {
-                fishIconRects.Add(new Rectangle(
-                    10 + (totalPadding) * i, // Adjust X position for consistent spacing
-                    yPosition,
-                    frameSize, // Frame width
-                    frameSize  // Frame height
-                ));
-            }
+            fishIconRects = CalculateFramePositions();
 
             // Load weapon icon and define its frame inline with fish/snail icons
             weaponIcon = Raylib.LoadTexture("sprites/harpoon.png");
-            int weaponFrameX = 10 + (totalPadding) * fishIcons.Count; // Positioned after the last fish/snail icon
-            weaponFrameRect = new Rectangle(
-                weaponFrameX,
-                yPosition,
-                frameSize,
-                frameSize
-            );
+            weaponFrameRect = CalculateWeaponFramePosition();
         }
         public Rectangle WeaponFrameRect
         {
@@ -101,7 +87,7 @@ namespace FishTankSimulator
                 Color frameColor = isHovered ? Color.Gray : Color.White;
 
                 // Draw frame and fish icon
-                DrawFrame(frameRect, frameColor, fishIcons[i], scale);
+                DrawFrame(frameRect, frameColor, fishIcons[i]);
 
                 // Draw fish cost below frame
                 string costText = $"${fishCosts[i]}";
@@ -121,7 +107,7 @@ namespace FishTankSimulator
             // Draw weapon frame
             bool isWeaponHovered = Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(), weaponFrameRect);
             Color weaponFrameColor = isWeaponHovered ? Color.Gray : (weapon.IsActived ? Color.Green : Color.White);
-            DrawFrame(weaponFrameRect, weaponFrameColor, weaponIcon, scale);
+            DrawFrame(weaponFrameRect, weaponFrameColor, weaponIcon);
 
             // Draw weapon label below frame
             string weaponText = "Weapon";
@@ -147,9 +133,8 @@ namespace FishTankSimulator
             }
         }
 
-        private void DrawFrame(Rectangle frameRect, Color frameColor, Texture2D icon, float scale)
+        private void DrawFrame(Rectangle frameRect, Color frameColor, Texture2D icon)
         {
-            // Draw frame
             Raylib.DrawTexturePro(
                 frameTexture,
                 new Rectangle(0, 0, frameTexture.Width, frameTexture.Height),
@@ -160,8 +145,8 @@ namespace FishTankSimulator
             );
 
             // Scale and center the icon within the frame
-            int scaledWidth = (int)(iconSize * scale);
-            int scaledHeight = (int)(iconSize * scale);
+            int scaledWidth = (int)(IconSize * ScaleFactor);
+            int scaledHeight = (int)(IconSize * ScaleFactor);
             Rectangle iconRect = new Rectangle(
                 frameRect.X + (frameRect.Width - scaledWidth) / 2,
                 frameRect.Y + (frameRect.Height - scaledHeight) / 2,
@@ -216,59 +201,38 @@ namespace FishTankSimulator
 
         public void UpdateShopItems()
         {
-            // Clear current lists
             fishIcons.Clear();
             fishNames.Clear();
             fishCosts.Clear();
             fishIconRects.Clear();
 
-            // Reload icons and names based on the current level
-            fishIcons.Add(Raylib.LoadTexture("sprites/guppy/swim_to_left/1.png")); // Guppy
+            fishIcons.Add(Raylib.LoadTexture("sprites/guppy/swim_to_left/1.png"));
             fishNames.Add("Guppy");
             fishCosts.Add(100);
 
-            // Add Snapper and Snail if GameLevel >= 3
-            if (level.GameLevel >= 3)
+            if (Player.GameLevel >= 3)
             {
-                fishIcons.Add(Raylib.LoadTexture("sprites/blue/swim_to_left/1.png")); // Snapper
+                fishIcons.Add(Raylib.LoadTexture("sprites/blue/swim_to_left/1.png"));
                 fishNames.Add("Snapper");
                 fishCosts.Add(150);
 
-                fishIcons.Add(Raylib.LoadTexture("sprites/shark/swim_to_left/1.png")); // Snail
+                fishIcons.Add(Raylib.LoadTexture("sprites/shark/swim_to_left/1.png"));
                 fishNames.Add("Snail");
                 fishCosts.Add(300);
             }
 
-            // Add Flounder if GameLevel >= 6
-            if (level.GameLevel >= 6)
+            if (Player.GameLevel >= 6)
             {
-                fishIcons.Insert(2, Raylib.LoadTexture("sprites/red/swim_to_left/1.png")); // Flounder
+                fishIcons.Insert(2, Raylib.LoadTexture("sprites/red/swim_to_left/1.png"));
                 fishNames.Insert(2, "Flounder");
                 fishCosts.Insert(2, 200);
             }
 
-            // Recalculate fish icon positions
-            int frameSize = iconSize + 20; // Frame size slightly larger than the icon
-            int totalPadding = padding + frameSize; // Space between frames
-            for (int i = 0; i < fishIcons.Count; i++)
-            {
-                fishIconRects.Add(new Rectangle(
-                    10 + (totalPadding) * i, // Adjust X position for consistent spacing
-                    yPosition,
-                    frameSize,
-                    frameSize
-                ));
-            }
-
-            // Recalculate weapon frame position
-            int weaponFrameX = 10 + (totalPadding) * fishIcons.Count; // Positioned after the last fish/snail icon
-            weaponFrameRect = new Rectangle(
-                weaponFrameX,
-                yPosition,
-                frameSize,
-                frameSize
-            );
+            // Recalculate positions
+            fishIconRects = CalculateFramePositions();
+            weaponFrameRect = CalculateWeaponFramePosition();
         }
+
 
         // Method to attempt to buy a fish
         public bool TryBuyFish(int fishIndex)
@@ -276,7 +240,7 @@ namespace FishTankSimulator
             if (fishIndex >= 0 && fishIndex < fishCosts.Count)
             {
                 int fishCost = fishCosts[fishIndex];
-                if (level.Money >= fishCost)
+                if (_player.Money >= fishCost)
                 {
                     // Deduct the gold and return true to indicate successful purchase
                     return true;
@@ -288,7 +252,7 @@ namespace FishTankSimulator
         public bool TryBuySnail()
         {
             int snailCost = fishCosts[^1]; // Last cost in the list is for Snail
-            if (level.Money >= snailCost)
+            if (_player.Money >= snailCost)
             {
                 Console.WriteLine("Snail purchased!");
                 return true;
@@ -314,6 +278,31 @@ namespace FishTankSimulator
 
             // Exclude the weapon frame from this method
             return null; // No fish frame was clicked
+        }
+
+        private List<Rectangle> CalculateFramePositions()
+        {
+            List<Rectangle> positions = new List<Rectangle>();
+            int totalPadding = padding + FrameSize;
+
+            for (int i = 0; i < fishIcons.Count; i++)
+            {
+                positions.Add(new Rectangle(
+                    10 + (totalPadding) * i, // Adjust X position
+                    yPosition,               // Consistent Y position
+                    FrameSize,               // Frame width
+                    FrameSize                // Frame height
+                ));
+            }
+
+            return positions;
+        }
+
+        private Rectangle CalculateWeaponFramePosition()
+        {
+            int totalPadding = padding + FrameSize;
+            int weaponFrameX = 10 + (totalPadding) * fishIcons.Count;
+            return new Rectangle(weaponFrameX, yPosition, FrameSize, FrameSize);
         }
 
 
@@ -347,13 +336,6 @@ namespace FishTankSimulator
             }
             return string.Empty;
         }
-
-        public int GoldAmount
-        {
-            get { return level.Money; }
-            set { level.Money = value; }
-        }
-
         public bool IsWeaponActivated()
         {
              return weapon.IsActived; 
@@ -367,5 +349,6 @@ namespace FishTankSimulator
         {
             get { return weapon; }
         }
+
     }
 }

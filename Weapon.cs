@@ -43,10 +43,10 @@ namespace FishTankSimulator
         }
 
         
-        public void HandleWeaponEffect(Vector2? startPosition, float deltaTime, Level _level)
+        public void HandleWeaponEffect(Vector2? startPosition, float deltaTime, Player player)
         {
-            damage = 40 + ((_level.WeaponLevel - 1) * 10);
-            cost = 20 + ((_level.WeaponLevel - 1) * 5);
+            damage = 50 + ((player.WeaponLevel - 1) * 10);
+            cost = 20 + ((player.WeaponLevel - 1) * 5);
             // Start the effect if a position is provided
             if (startPosition.HasValue)
             {

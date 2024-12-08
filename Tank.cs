@@ -6,47 +6,49 @@ namespace FishTankSimulator
 {
     public class Tank
     {
-        private Level _level;
+        private Player _player;
         private List<CoinFish> _fishList;
         private List<Coin> _coinList;
         private List<Food> _foodList;
         private List<PredatorFish> _predatorFishList;
+        private List<ExoticFish> _exoticFishList;
         private List<Treasure> _treasureList; 
         private List<Snail> _snailList;
-        private int _maxSnails;
-        private int _maxFish;
         private Shop _shop;
         private float _predatorSpawnTimer;
         private float _predatorSpawnInterval;
+         private float _exoticFishSpawnTimer;
+        private float _exoticFishSpawnInterval;
         private int currentFoodCount;
         private int currentWeaponCount;
         private float timer;
-        private bool isMenuActive;
         private Upgrade _upgrade;
+        private InGameMenu _inGameMenu;
         private int foodCost;
 
         private Font customFont = Raylib.LoadFont("font/font.ttf"); // Declare a custom font
 
         // Constructor
-        public Tank(Shop shop, Level level, Upgrade upgrade)
+        public Tank(Shop shop, Player player, Upgrade upgrade, int windowWidth, int windowHeight)
         {
-            _level = level;
+            _player = player;
             _foodList = new List<Food>();
             _predatorFishList = new List<PredatorFish>();
+            _exoticFishList = new List<ExoticFish>();
             _fishList = new List<CoinFish>();
             _coinList = new List<Coin>();
             _treasureList = new List<Treasure>(); // Initialize the treasure list
             _snailList = new List<Snail>();
-            _maxSnails = 2;
-            _maxFish = 10;
             _shop = shop;
             _predatorSpawnTimer = 0f;
             _predatorSpawnInterval = 40f;
+            _exoticFishSpawnTimer = 0f;
+            _exoticFishSpawnInterval = 5f;
             currentFoodCount = 0;
             currentWeaponCount = 0;
             timer = 0;
-            isMenuActive = false;
             _upgrade = upgrade;
+            _inGameMenu = new InGameMenu(windowWidth, windowHeight);
         }
 
         /// <summary>
@@ -60,19 +62,19 @@ namespace FishTankSimulator
             // Check if the selected index corresponds to the Snail
             if (fishIndex == _shop.FishIcons.Count - 1 && _shop.FishIcons.Count > 1) // Assuming the last icon is for the Snail
             {
-                if (_snailList.Count >= _maxSnails)
+                if (_snailList.Count >= _player.MaxSnail)
                 {
                     Console.WriteLine("Cannot buy more snails. Maximum snails reached.");
                     return false;
                 }
 
-                if (_level.Money >= fishCost)
+                if (_player.Money >= fishCost)
                 {
-                    _level.Money -= fishCost;
+                    _player.Money -= fishCost;
 
                     Random random = new Random();
                     int startPosition = random.Next(1, windowWidth - 1); 
-                    Snail newSnail = new Snail(this, windowHeight, startPosition);
+                    Snail newSnail = new Snail(this, windowHeight, startPosition, _player);
 
                     AddSnail(newSnail);
                     return true;
@@ -83,15 +85,15 @@ namespace FishTankSimulator
             }
 
             // Handle fish purchase
-            if (_fishList.Count >= _maxFish)
+            if (_fishList.Count >= _player.MaxFish)
             {
                 Console.WriteLine("Cannot buy more fish. Tank is full.");
                 return false;
             }
 
-            if (_level.Money >= fishCost)
+            if (_player.Money >= fishCost)
             {
-                _level.Money -= fishCost;
+                _player.Money -= fishCost;
 
                 Vector2 initialPosition = GetRandomPosition(windowWidth, windowHeight);
                 // Pass the CoinFishType to the CoinFish constructor
@@ -120,11 +122,16 @@ namespace FishTankSimulator
         /// </summary>
         public void Update(float deltaTime, int windowWidth, int windowHeight, bool clickConsumed)
         {
-            foodCost = 10 + ((_level.FoodLevel - 1) * 2); // Calculate cost based on food level
+            foodCost = 10 + ((_player.FoodLevel - 1) * 2); // Calculate cost based on food level
             
             if (_upgrade.IsActive)
             {
                 return; // Skip the rest of the update logic
+            }
+            if(_inGameMenu.IsMenuVisible)
+            {
+                _inGameMenu.Update();
+                return;
             }
             timer += deltaTime;
             if(timer >= 1f){
@@ -169,6 +176,11 @@ namespace FishTankSimulator
                 clickHandled = UpdateCoins(deltaTime, windowHeight);
             }
 
+            if (!clickHandled)
+            {
+                clickHandled = UpdateTreasure(deltaTime, windowHeight);
+            }
+
             // Handle food interaction only if click wasn't consumed by coin collection or weapon
             if (!clickHandled)
             {
@@ -177,8 +189,8 @@ namespace FishTankSimulator
 
             // Update fish, food, and other objects
             UpdateFish(deltaTime, windowWidth, windowHeight);
+            UpdateExorticFish(deltaTime, windowWidth, windowHeight);
             UpdateFood(deltaTime, windowHeight);
-            UpdateTreasures(deltaTime, windowHeight, ref clickHandled);
             UpdatePredators(deltaTime, windowWidth, windowHeight);
             UpdateSnails(deltaTime, windowWidth, windowHeight);
             // Draw the weapon effect regardless of clickHandled to allow interaction with weapon while keeping other interactions intact    
@@ -197,6 +209,39 @@ namespace FishTankSimulator
                 }
             }
         }
+        private void UpdateExorticFish(float deltaTime, int windowWidth, int windowHeight)
+        {
+            // Handle spawning predators
+            _exoticFishSpawnTimer += deltaTime;
+            if (_exoticFishSpawnTimer >= _exoticFishSpawnInterval)
+            {
+                SpawnExoticFish(windowHeight);
+                _exoticFishSpawnTimer = 0f;
+            }
+
+            // Update each predator
+            for (int i = _exoticFishList.Count - 1; i >= 0; i--)
+            {
+                ExoticFish exoticFish = _exoticFishList[i];
+
+                if (exoticFish == null)
+                {
+                    Console.WriteLine("Warning: Null predator detected. Removing it from the list.");
+                    _exoticFishList.RemoveAt(i);
+                    continue; // Skip to the next iteration
+                }
+                // Update predator's state
+                exoticFish.Update(deltaTime, windowWidth, windowHeight);
+
+                // Remove predator if it leaves the tank
+                if (exoticFish.Position.X < -200 || exoticFish.Position.X > windowWidth + 200)
+                {
+                    Console.WriteLine($"Predator at index {i} has left the tank. Removing it.");
+                    _exoticFishList.RemoveAt(i);
+                }
+            }
+        }
+
 
         private void UpdateSnails(float deltaTime, int windowWidth, int windowHeight)
         {
@@ -226,7 +271,7 @@ namespace FishTankSimulator
                     // Check if the click interacts with this coin
                     if (coin.IsClicked(mousePosition))
                     {
-                        _level.Money += coin.GetValue(); // Add coin value to money
+                        _player.Money += coin.GetValue(); // Add coin value to money
                         _coinList.RemoveAt(i); // Remove the coin from the tank
                         clickHandled = true; // Mark the click as handled
                         continue; // Exit this iteration
@@ -242,6 +287,44 @@ namespace FishTankSimulator
 
             return clickHandled;
         }
+
+        private bool UpdateTreasure(float deltaTime, int windowHeight)
+        {
+            bool clickHandled = false; // Track if the click was handled by a coin
+
+            for (int i = _treasureList.Count - 1; i >= 0; i--)
+            {
+                var treasure = _treasureList[i];
+
+                // Update the coin's position every frame
+                treasure.Update(deltaTime, windowHeight);
+
+                // Check for coin interaction (mouse click) if the click isn't already handled
+                if (!clickHandled && Raylib.IsMouseButtonPressed(MouseButton.Left))
+                {
+                    Vector2 mousePosition = Raylib.GetMousePosition();
+
+                    // Check if the click interacts with this coin
+                    if (treasure.IsClicked(mousePosition))
+                    {
+                        _player.Money += treasure.GetValue(); // Add coin value to money
+                        _treasureList.RemoveAt(i); // Remove the coin from the tank
+                        clickHandled = true; // Mark the click as handled
+                        continue; // Exit this iteration
+                    }
+                }
+
+                // Remove expired coins
+                if (treasure.IsExpired())
+                {
+                    _treasureList.RemoveAt(i);
+                }
+            }
+
+            return clickHandled;
+        }
+
+
         private void UpdateFood(float deltaTime, int windowHeight)
         {
             for (int i = _foodList.Count - 1; i >= 0; i--)
@@ -259,31 +342,7 @@ namespace FishTankSimulator
         /// <summary>
         /// Updates all treasures in the tank.
         /// </summary>
-        private void UpdateTreasures(float deltaTime, int windowHeight, ref bool clickHandled)
-        {
-            for (int i = _treasureList.Count - 1; i >= 0; i--)
-            {
-                var treasure = _treasureList[i];
-                treasure.Update(deltaTime, windowHeight);
-
-                if (Raylib.IsMouseButtonPressed(MouseButton.Left))
-                {
-                    Vector2 mousePosition = Raylib.GetMousePosition();
-                    if (!clickHandled && treasure.IsClicked(mousePosition))
-                    {
-                        _level.Money += treasure.Value; // Collect treasure and add value to money
-                        _treasureList.RemoveAt(i);
-                        clickHandled = true;
-                        continue;
-                    }
-                }
-
-                if (!treasure.IsActive)
-                {
-                    _treasureList.RemoveAt(i); // Remove inactive treasures
-                }
-            }
-        }
+  
         private void UpdatePredators(float deltaTime, int windowWidth, int windowHeight)
         {
             // Handle spawning predators
@@ -338,9 +397,9 @@ namespace FishTankSimulator
         {
             Vector2 mousePosition = Raylib.GetMousePosition();
 
-            if (_level.Money >= _shop.Weapon.Cost && currentWeaponCount <= (_level.WeaponCountLevel/1.5f)) // Example cost per shot
+            if (_player.Money >= _shop.Weapon.Cost && currentWeaponCount <= (_player.WeaponCountLevel/1.5f)) // Example cost per shot
             {
-                _level.Money -= _shop.Weapon.Cost;
+                _player.Money -= _shop.Weapon.Cost;
                 currentWeaponCount++;
 
                 bool predatorHit = false;
@@ -355,7 +414,7 @@ namespace FishTankSimulator
                     }
                 }
 
-                _shop.Weapon.HandleWeaponEffect(mousePosition, deltaTime, _level);
+                _shop.Weapon.HandleWeaponEffect(mousePosition, deltaTime, _player);
 
                 if (!predatorHit)
                 {
@@ -368,8 +427,6 @@ namespace FishTankSimulator
             }
         }
 
-
-
         /// <summary>
         /// Renders all objects in the tank (fish, coins, food) and the player's money.
         /// </summary>
@@ -381,63 +438,75 @@ namespace FishTankSimulator
             foreach (var coin in _coinList)
                 coin.Draw();
 
-            foreach (var food in _foodList)
-                food.Draw();
-
             foreach (var treasure in _treasureList)
                 treasure.Draw();
 
+            foreach (var food in _foodList)
+                food.Draw();
+
             foreach (var predator in _predatorFishList)
-                predator.Draw(deltaTime); // Draw predators
+                predator.Draw(deltaTime); 
+
+            foreach (var exoticFish in _exoticFishList)
+                exoticFish.Draw(deltaTime);
 
             foreach (var snail in _snailList)
                 snail.Draw(deltaTime);
 
             DrawHUD(windowWidth);
-            _shop.Weapon.HandleWeaponEffect(null, deltaTime, _level);
+            _shop.Weapon.HandleWeaponEffect(null, deltaTime, _player);
             if (_upgrade.IsActive)
             {
-                _upgrade.Draw(windowWidth);  // Draw the upgrade menu
+                _upgrade.Draw(windowWidth); 
             }
+            _inGameMenu.Draw();
         }
         private void DrawHUD(int windowWidth)
         {
             // Draw money information
-            DrawTextWithCustomFont($"Money: {_level.Money}", new Vector2(windowWidth - 400, 50));
+            DrawTextWithCustomFont($"Money: {_player.Money}", new Vector2(windowWidth - 500, 50));
 
             // Draw level information
-            DrawTextWithCustomFont($"Level: {_level.GameLevel}", new Vector2(windowWidth - 400, 20));
+            DrawTextWithCustomFont($"Level: {Player.GameLevel}", new Vector2(windowWidth - 500, 20));
 
-            // Draw buttons and handle clicks
-            if (DrawButton("Upgrade", new Rectangle(windowWidth - 200, 20, 120, 40), Color.DarkGray, Color.LightGray, Color.White))
+            // Draw buttons and handle clicks using background images
+            if (DrawButton("Upgrade", new Rectangle(windowWidth - 200, 20, 100, 30), "sprites/button.png", Color.LightGray, Color.White))
             {
                 _upgrade.SetIsActive();
             }
 
-            if (DrawButton("Menu", new Rectangle(windowWidth - 200, 70, 120, 40), Color.DarkGray, Color.LightGray, Color.White))
+            if (DrawButton("Menu", new Rectangle(windowWidth - 200, 70, 100, 30), "sprites/button.png", Color.LightGray, Color.White))
             {
-                isMenuActive = true; // Activate the menu state
+                _inGameMenu.IsMenuVisible = !_inGameMenu.IsMenuVisible; // Activate the menu state
             }
         }
-        
-        public void SetIsMenuActive()
-        {
-            isMenuActive = false;
-        }
-
         private void DrawTextWithCustomFont(string text, Vector2 position)
         {
             int fontSize = 35;
             Raylib.DrawTextEx(customFont, text, position, fontSize, 2, Color.Gold);
         }
 
-        private bool DrawButton(string label, Rectangle rect, Color bgColor, Color hoverColor, Color textColor)
+        private bool DrawButton(string label, Rectangle rect, string imagePath, Color hoverColor, Color textColor)
         {
+            // Load the button texture (background image)
+            Texture2D buttonTexture = Raylib.LoadTexture(imagePath);
+
+            // Scale the texture to fit the button
+            int buttonWidth = (int)rect.Width;
+            int buttonHeight = (int)rect.Height;
+
             // Check if the mouse is over the button
             bool isHovered = Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(), rect);
-            
-            // Change the button color when hovered
-            Raylib.DrawRectangleRec(rect, isHovered ? hoverColor : bgColor);
+
+            // Draw the button texture (background image) and apply the hover effect
+            Raylib.DrawTexturePro(
+                buttonTexture, 
+                new Rectangle(0, 0, buttonTexture.Width, buttonTexture.Height),  // Source rectangle (whole image)
+                new Rectangle(rect.X, rect.Y, buttonWidth, buttonHeight),       // Destination rectangle (scaled size)
+                Vector2.Zero,                                                   // Origin (no offset)
+                0f,                                                              // Rotation (no rotation)
+                isHovered ? hoverColor : Color.White                              // Apply hover effect if needed
+            );
 
             // Draw the button label
             int fontSize = 20;
@@ -451,22 +520,24 @@ namespace FishTankSimulator
             // Return true if the button is clicked
             return isHovered && Raylib.IsMouseButtonPressed(MouseButton.Left);
         }
+
         private bool IsButtonClicked(int windowWidth)
         {
-            // Check for "Upgrade" button click
-            if (DrawButton("Upgrade", new Rectangle(windowWidth - 200, 20, 120, 40), Color.DarkGray, Color.LightGray, Color.White))
+            // Check for "Upgrade" button click using background image
+            if (DrawButton("Upgrade", new Rectangle(windowWidth - 200, 20, 100, 30), "sprites/button.png", Color.LightGray, Color.White))
             {
                 return true;
             }
 
-            // Check for "Menu" button click
-            if (DrawButton("Menu", new Rectangle(windowWidth - 200, 70, 120, 40), Color.DarkGray, Color.LightGray, Color.White))
+            // Check for "Menu" button click using background image
+            if (DrawButton("Menu", new Rectangle(windowWidth - 200, 70, 100, 30), "sprites/button.png", Color.LightGray, Color.White))
             {
                 return true;
             }
 
             return false;
         }
+
 
 
         /// <summary>
@@ -481,7 +552,7 @@ namespace FishTankSimulator
                 coin.UnloadTextures();
 
             foreach (var treasure in _treasureList)
-                treasure.UnloadTexture();
+                treasure.UnloadTextures();;
 
             foreach (var predator in _predatorFishList)
                 predator.UnloadTextures(); // Unload predator textures
@@ -490,6 +561,7 @@ namespace FishTankSimulator
                 snail.UnloadTextures();
 
             _shop.UnloadTextures();
+            _inGameMenu.Unload();
         }
 
         // Private Methods
@@ -505,19 +577,31 @@ namespace FishTankSimulator
         
         public void CollectCoin(Coin coin)
         {
-            _level.Money += coin.GetValue();
+            _player.Money += coin.GetValue();
             _coinList.Remove(coin);
         }
         
+        private void AddTreasureToTank(Treasure treasure)
+        {
+            _treasureList.Add(treasure);
+        }
         private void SpawnPredator(int windowHeight)
         {
             Vector2 spawnPosition = new Vector2(-100, Raylib.GetRandomValue(100, windowHeight - 100));
-            PredatorFish predator = new PredatorFish(spawnPosition, this); // Pass the current Tank instance
+            PredatorFish predator = new PredatorFish(spawnPosition, this, _player.GetPredatorType()); // Pass the current Tank instance
 
             predator.OnFishEaten += HandleFishEaten;
 
             _predatorFishList.Add(predator);
         }
+        private void SpawnExoticFish(int windowHeight)
+        {
+            Vector2 spawnPosition = new Vector2(-100, Raylib.GetRandomValue(100, windowHeight - 100));
+            ExoticFish exoticFish = new ExoticFish(spawnPosition, this); // Pass the current Tank instance
+            _exoticFishList.Add(exoticFish);
+            exoticFish.OnTreasureDropped += AddTreasureToTank;
+        }
+
 
         private void HandleFishEaten(Fish eatenFish)
         {
@@ -584,10 +668,10 @@ namespace FishTankSimulator
             {
                 Vector2 mousePosition = Raylib.GetMousePosition();
 
-                if (_level.Money >=foodCost  && currentFoodCount <= (_level.FoodCountLevel/1.5f)) // Ensure player has enough money for food
+                if (_player.Money >=foodCost  && currentFoodCount <= (_player.FoodCountLevel/1.5f)) // Ensure player has enough money for food
                 {
-                    _foodList.Add(new Food(mousePosition, _level)); // Add new food
-                    _level.Money -= foodCost; // Deduct money for food
+                    _foodList.Add(new Food(mousePosition, _player)); // Add new food
+                    _player.Money -= foodCost; // Deduct money for food
                     clickHandled = true; // Mark the click as handled
                     currentFoodCount++;
                 }
@@ -611,18 +695,15 @@ namespace FishTankSimulator
             private set => _foodList = value;
         }
         public List<Treasure> TreasureList => _treasureList;
-        public int Money => _level.Money;
+        public int Money => _player.Money;
 
         /// <summary>
         /// Adds a new treasure to the tank.
         /// </summary>
-        public void AddTreasure(Treasure treasure)
-        {
-            _treasureList.Add(treasure);
-        }
         public void AddSnail(Snail snail)
         {
-            _snailList.Add(snail);
+            if(_snailList.Count < _player.MaxSnail)
+                _snailList.Add(snail);
         }
         public void RemoveSnail(Snail snail)
         {
@@ -634,27 +715,17 @@ namespace FishTankSimulator
         /// </summary>
         public void AddFish(CoinFish fish)
         {
-            if (_fishList.Count < _maxFish)
+            if (_fishList.Count < _player.MaxFish)
             {
                 _fishList.Add(fish);
                 fish.OnCoinDropped += AddCoinToTank;
             }
         }
-
         public void RemoveFish(CoinFish fish)
         {
             _fishList.Remove(fish);
         }
 
-        public void AddPredator(PredatorFish predator)
-        {
-            _predatorFishList.Add(predator);
-        }
-
-        public void RemovePredator(PredatorFish predator)
-        {
-            _predatorFishList.Remove(predator);
-        }
 
         
     }
