@@ -31,7 +31,7 @@ namespace FishTankSimulator
             weapon = weaponInstance;
             _player = player;
 
-            // Load icons for fish and snail
+            // Load icons for fish and Helper
             fishIcons = new List<Texture2D>
             {
                 Raylib.LoadTexture("sprites/guppy/swim_to_left/1.png"), // Icon for Guppy
@@ -41,7 +41,7 @@ namespace FishTankSimulator
             if (Player.GameLevel >= 3)
             {
                 fishIcons.Add(Raylib.LoadTexture("sprites/blue/swim_to_left/1.png")); // Add Snapper icon
-                fishIcons.Add(Raylib.LoadTexture("sprites/shark/swim_to_left/1.png")); // Add Snail icon
+                fishIcons.Add(Raylib.LoadTexture("sprites/shark/swim_to_left/1.png")); // Add Helper icon
             }
 
             // Add Flounder icon if GameLevel >= 6
@@ -55,14 +55,14 @@ namespace FishTankSimulator
             // Load frame texture
             frameTexture = Raylib.LoadTexture("sprites/frame.png");
 
-            // Define costs and names for fish and snail
-            fishCosts = new List<int> { 100, 150, 200, 300 }; // Last cost is for Snail
-            fishNames = new List<string> { "Guppy", "Snapper", "Flounder", "Snail" }; // Last name is Snail
+            // Define costs and names for fish and Helper
+            fishCosts = new List<int> { 100, 150, 200, 300 }; // Last cost is for Helper
+            fishNames = new List<string> { "Guppy", "Snapper", "Flounder", "Helper" }; // Last name is Helper
 
             // Define positions for the icons
             fishIconRects = CalculateFramePositions();
 
-            // Load weapon icon and define its frame inline with fish/snail icons
+            // Load weapon icon and define its frame inline with fish/Helper icons
             weaponIcon = Raylib.LoadTexture("sprites/harpoon.png");
             weaponFrameRect = CalculateWeaponFramePosition();
         }
@@ -77,8 +77,6 @@ namespace FishTankSimulator
 
         public void Draw()
         {
-            float scale = 1f; // Scale factor (reduce to 80% of original size)
-
             // Draw fish frames
             for (int i = 0; i < fishIcons.Count; i++)
             {
@@ -176,15 +174,15 @@ namespace FishTankSimulator
                 return;
             }
 
-            // If the weapon frame was not clicked, check the fish/snail frames
+            // If the weapon frame was not clicked, check the fish/Helper frames
             for (int i = 0; i < fishIconRects.Count; i++)
             {
                 if (Raylib.IsMouseButtonPressed(MouseButton.Left) &&
                     Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(), fishIconRects[i]))
                 {
-                    if (i == fishIcons.Count - 1) // Last index is for the Snail
+                    if (i == fishIcons.Count - 1) // Last index is for the Helper
                     {
-                        TryBuySnail();
+                        TryBuyHelper();
                     }
                     else
                     {
@@ -216,8 +214,8 @@ namespace FishTankSimulator
                 fishNames.Add("Snapper");
                 fishCosts.Add(150);
 
-                fishIcons.Add(Raylib.LoadTexture("sprites/shark/swim_to_left/1.png"));
-                fishNames.Add("Snail");
+                fishIcons.Add(Raylib.LoadTexture("sprites/helper/swim_to_left/1.png"));
+                fishNames.Add("Helper");
                 fishCosts.Add(300);
             }
 
@@ -249,15 +247,15 @@ namespace FishTankSimulator
             return false;
         }
 
-        public bool TryBuySnail()
+        public bool TryBuyHelper()
         {
-            int snailCost = fishCosts[^1]; // Last cost in the list is for Snail
-            if (_player.Money >= snailCost)
+            int helperCost = fishCosts[^1]; // Last cost in the list is for Helper
+            if (_player.Money >= helperCost)
             {
-                Console.WriteLine("Snail purchased!");
+                Console.WriteLine("Helper purchased!");
                 return true;
             }
-            Console.WriteLine("Not enough gold to buy Snail!");
+            Console.WriteLine("Not enough gold to buy Helper!");
             return false;
         }
 

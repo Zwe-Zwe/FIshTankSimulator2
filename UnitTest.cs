@@ -27,22 +27,8 @@ namespace FishTankSimulator.Tests
             Assert.AreNotEqual(initialPosition, coin.Position); // The position should have changed
         }
 
-        /// <summary>
-        /// Test that verifies the <see cref="Coin.OnPickup"/> method correctly deactivates the coin.
-        /// </summary>
-        [Test]
-        public void Coin_OnPickupTest()
-        {
-            // Arrange
-            var coin = new Coin(new Vector2(100, 100), CoinType.Gold);
-
-            // Act
-            coin.OnPickup();
-
-            // Assert
-            Assert.IsFalse(coin.IsActive); // The coin should be inactive after pickup
-        }
-
+ 
+    
         /// <summary>
         /// Test that verifies the <see cref="Coin.GetValue"/> method returns the correct value for a gold coin.
         /// </summary>
@@ -84,23 +70,6 @@ namespace FishTankSimulator.Tests
         }
 
         /// <summary>
-        /// Test that verifies the <see cref="Food.OnPickup"/> method correctly deactivates the food.
-        /// </summary>
-        [Test]
-        public void Food_OnPickupTest()
-        {
-            Player player = new Player();
-            // Arrange
-            var food = new Food(new Vector2(100, 100), player);
-
-            // Act
-            food.OnPickup();
-
-            // Assert
-            Assert.IsFalse(food.IsActive); // The food should be inactive after pickup
-        }
-
-        /// <summary>
         /// Test that verifies the <see cref="Food.GetValue"/> method returns the correct value for a food item.
         /// </summary>
         [Test]
@@ -131,26 +100,22 @@ namespace FishTankSimulator.Tests
         {
             // Arrange
             var treasure = new Treasure(new Vector2(100, 100));
+            treasure.AnimationFrames = new List<Texture2D> // Mock animation frames
+            {
+                new Texture2D(), // Dummy texture
+                new Texture2D()
+            };
             var initialPosition = treasure.Position;
+
             // Act
-            treasure.Update(1.0f, 600);  // Simulate 1 second of update
+            treasure.Update(1.0f, 600); // Simulate 1 second of update
+
             // Assert
-            Assert.AreNotEqual(initialPosition, treasure.Position); // The position should have changed
+            Assert.AreNotEqual(initialPosition, treasure.Position, "The position should have changed during the fall.");
+            Assert.IsFalse(treasure.IsExpired(), "The treasure should not be expired after 1 second.");
         }
 
-        /// <summary>
-        /// Test that verifies the <see cref="Treasure.OnPickup"/> method correctly deactivates the treasure.
-        /// </summary>
-        [Test]
-        public void Treasure_OnPickupTest()
-        {
-            // Arrange
-            var treasure = new Treasure(new Vector2(100, 100));
-            // Act
-            treasure.OnPickup();
-            // Assert
-            Assert.IsFalse(treasure.IsActive); // The treasure should be inactive after pickup
-        }
+
 
         /// <summary>
         /// Test that verifies the <see cref="Treasure.GetValue"/> method returns the correct value for a diamond treasure.

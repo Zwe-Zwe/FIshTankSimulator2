@@ -7,14 +7,16 @@ namespace FishTankSimulator
 {
     public class CoinFish : Fish
     {
- 
         private float coinDropTimer;
         private Growth growth;
         private Food targetFood;
         private CoinFishType fishType;
         public event Action<Coin> OnCoinDropped;
-        
+
         private const int healthReduceRate = 4;
+
+        // Static cache for textures to avoid reloading
+        private static readonly Dictionary<CoinFishType, (List<Texture2D> Left, List<Texture2D> Right)> textureCache = new();
 
         public CoinFish(Vector2 initialPosition, CoinFishType type, Tank tank) : base(tank)
         {
@@ -35,18 +37,32 @@ namespace FishTankSimulator
             Health = new Health(baseMaxHealth * growth.GetHealthMultiplier());
             coinDropTimer = GetRandomDropInterval();
 
-            // Load appropriate textures based on fish type
-            string basePath = fishType switch
-            {
-                CoinFishType.Guppy => "sprites/guppy",
-                CoinFishType.Snapper => "sprites/blue",
-                CoinFishType.Flounder => "sprites/red",
-                _ => "sprites/guppy"
-            };
+            // Ensure textures are loaded only once per type
+            LoadFishTextures(type);
 
-            LeftAnimator = new Animator(LoadTextures($"{basePath}/swim_to_left"), 0.1f);
-            RightAnimator = new Animator(LoadTextures($"{basePath}/swim_to_right"), 0.1f);
+            // Use cached textures for animators
+            LeftAnimator = new Animator(textureCache[type].Left, 0.1f);
+            RightAnimator = new Animator(textureCache[type].Right, 0.1f);
             IsMovingLeft = Speed.X < 0;
+        }
+
+        private static void LoadFishTextures(CoinFishType type)
+        {
+            if (!textureCache.ContainsKey(type))
+            {
+                string basePath = type switch
+                {
+                    CoinFishType.Guppy => "sprites/guppy",
+                    CoinFishType.Snapper => "sprites/blue",
+                    CoinFishType.Flounder => "sprites/red",
+                    _ => "sprites/guppy"
+                };
+
+                textureCache[type] = (
+                    Left: LoadTextures($"{basePath}/swim_to_left"),
+                    Right: LoadTextures($"{basePath}/swim_to_right")
+                );
+            }
         }
 
         public float CoinDropTimer
@@ -54,6 +70,7 @@ namespace FishTankSimulator
             get { return coinDropTimer; }
             set { coinDropTimer = value; }
         }
+
         public float GetRandomDropInterval()
         {
             // Adjust drop rate based on fish type
@@ -66,19 +83,17 @@ namespace FishTankSimulator
             };
         }
 
-        
-
-        public override void Update(float deltaTime, int windowWidth, int windowHeight)
+        public override void Update(float deltaTime)
         {
             Position += Speed * deltaTime;
 
             // Bounce fish off tank walls
-            if (Position.X <= 0 || Position.X + 80 >= windowWidth)
+            if (Position.X <= 0 || Position.X + 80 >= Program.windowWidth)
             {
                 Speed = new Vector2(-Speed.X, Speed.Y);
                 IsMovingLeft = Speed.X < 0;
             }
-            if (Position.Y <= 0 || Position.Y + 80 >= windowHeight)
+            if (Position.Y <= 0 || Position.Y + 80 >= Program.windowHeight)
             {
                 Speed = new Vector2(Speed.X, -Speed.Y);
             }
@@ -150,7 +165,7 @@ namespace FishTankSimulator
         }
 
         public void EatFood(Food food)
-        { 
+        {
             food.OnPickup();
             Health.Increase(food.GetValue());
             growth.Eat();
@@ -179,6 +194,5 @@ namespace FishTankSimulator
             // Draw health bar
             Health.Draw(new Vector2(Position.X, Position.Y - 10), 50, 5);
         }
-
     }
 }

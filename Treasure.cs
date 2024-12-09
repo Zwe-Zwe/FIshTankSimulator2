@@ -12,10 +12,10 @@ namespace FishTankSimulator
         private float _frameTime;
         private float _animationTimer;
         private float _lifetime;
-        private const float MaxLifetime = 2.5f;
+        private const float MaxLifetime = 2f;
         private bool _isAtBottom;
         public Treasure(Vector2 position)
-            : base(position, GetCoinTexturePath(), 300f) // Use base class constructor
+            : base(position, 400f) // Use base class constructor
         {
             _animationFrames = LoadAnimationFrames();
             _currentFrame = 0;
@@ -24,12 +24,10 @@ namespace FishTankSimulator
             _lifetime = MaxLifetime;
             _isAtBottom = false;
         }
-
-        public override void OnPickup()
-        {
-            IsActive = false;
+        public List<Texture2D> AnimationFrames{
+            get { return _animationFrames; }
+            set { _animationFrames = value; }
         }
-
         public override int GetValue()
         {
             return 200 + (Player.GameLevel -1) * 100;
@@ -37,17 +35,17 @@ namespace FishTankSimulator
 
         public bool IsClicked(Vector2 mousePosition)
         {
-            Rectangle coinRect = new Rectangle(Position.X, Position.Y, _animationFrames[0].Width, _animationFrames[0].Height);
+            Rectangle coinRect = new Rectangle(position.X, position.Y, _animationFrames[0].Width, _animationFrames[0].Height);
             return Raylib.CheckCollisionPointRec(mousePosition, coinRect);
         }
 
         public override void Update(float deltaTime, int windowHeight)
         {
-            if (!_isAtBottom && Position.Y < windowHeight - _animationFrames[0].Height * 0.1f)
+            if (!_isAtBottom && position.Y < windowHeight - _animationFrames[0].Height * 0.1f)
             {
-                Position = new Vector2(Position.X, Position.Y + fallSpeed * deltaTime);
+                position = new Vector2(position.X, position.Y + fallSpeed * deltaTime);
             }
-            else if (!_isAtBottom && Position.Y >= windowHeight - _animationFrames[0].Height * 0.1f)
+            else if (!_isAtBottom && position.Y >= windowHeight - _animationFrames[0].Height * 0.1f)
             {
                 _isAtBottom = true;
             }
@@ -69,7 +67,7 @@ namespace FishTankSimulator
         {
             Texture2D currentSprite = _animationFrames[_currentFrame];
             float scaleFactor = 0.1f;
-            Raylib.DrawTextureEx(currentSprite, Position, 0.0f, scaleFactor, Color.White);
+            Raylib.DrawTextureEx(currentSprite, position, 0.0f, scaleFactor, Color.White);
         }
 
         public void UnloadTextures()
@@ -85,9 +83,9 @@ namespace FishTankSimulator
             string folderName = "sprites/gold_egg";
             List<Texture2D> frames = new List<Texture2D>();
 
-            for (int i = 1; i <= 12; i++) // Loop from 1 to 11
+            for (int i = 1; i <= 12; i++) // Loop from 1 to 12
             {
-                string filePath = $"{folderName}/{i:D2}.png";
+                string filePath = $"{folderName}/{i}.png"; // No leading zero
 
                 // Load each texture and add to the frames list
                 if (File.Exists(filePath)) // Optional: Check if the file exists
@@ -103,11 +101,6 @@ namespace FishTankSimulator
             return frames;
         }
 
-
-        private static string GetCoinTexturePath()
-        {
-            return "sprites/gold_egg/1.png";
-        }
         // New method to check if the coin has expired
         public bool IsExpired()
         {

@@ -13,11 +13,11 @@ namespace FishTankSimulator
         private List<PredatorFish> _predatorFishList;
         private List<ExoticFish> _exoticFishList;
         private List<Treasure> _treasureList; 
-        private List<Snail> _snailList;
+        private List<HelperFish> _helperList;
         private Shop _shop;
         private float _predatorSpawnTimer;
         private float _predatorSpawnInterval;
-         private float _exoticFishSpawnTimer;
+        private float _exoticFishSpawnTimer;
         private float _exoticFishSpawnInterval;
         private int currentFoodCount;
         private int currentWeaponCount;
@@ -25,7 +25,7 @@ namespace FishTankSimulator
         private Upgrade _upgrade;
         private InGameMenu _inGameMenu;
         private int foodCost;
-
+        private Texture2D ButtonTexture;
         private Font customFont = Raylib.LoadFont("font/font.ttf"); // Declare a custom font
 
         // Constructor
@@ -38,33 +38,36 @@ namespace FishTankSimulator
             _fishList = new List<CoinFish>();
             _coinList = new List<Coin>();
             _treasureList = new List<Treasure>(); // Initialize the treasure list
-            _snailList = new List<Snail>();
+            _helperList = new List<HelperFish>();
             _shop = shop;
             _predatorSpawnTimer = 0f;
-            _predatorSpawnInterval = 40f;
+            _predatorSpawnInterval = 10f;
             _exoticFishSpawnTimer = 0f;
-            _exoticFishSpawnInterval = 5f;
+            _exoticFishSpawnInterval = 10f;
             currentFoodCount = 0;
             currentWeaponCount = 0;
             timer = 0;
             _upgrade = upgrade;
             _inGameMenu = new InGameMenu(windowWidth, windowHeight);
+            ButtonTexture = Raylib.LoadTexture("sprites/button.png");
         }
+
+        public List<HelperFish> HelperList => _helperList;
 
         /// <summary>
         /// Attempts to buy a fish from the shop and adds it to the tank if successful.
         /// </summary>
         public bool TryBuyFish(int fishIndex, int windowWidth, int windowHeight)
         {
-            // Get the cost of the selected item (fish or snail)
+            // Get the cost of the selected item (fish or Helper)
             int fishCost = _shop.GetFishCost(fishIndex);
 
-            // Check if the selected index corresponds to the Snail
-            if (fishIndex == _shop.FishIcons.Count - 1 && _shop.FishIcons.Count > 1) // Assuming the last icon is for the Snail
+            // Check if the selected index corresponds to the Helper
+            if (fishIndex == _shop.FishIcons.Count - 1 && _shop.FishIcons.Count > 1) // Assuming the last icon is for the Helper
             {
-                if (_snailList.Count >= _player.MaxSnail)
+                if (_helperList.Count >= _player.MaxHelper)
                 {
-                    Console.WriteLine("Cannot buy more snails. Maximum snails reached.");
+                    Console.WriteLine("Cannot buy more Helpers. Maximum Helper reached.");
                     return false;
                 }
 
@@ -74,13 +77,15 @@ namespace FishTankSimulator
 
                     Random random = new Random();
                     int startPosition = random.Next(1, windowWidth - 1); 
-                    Snail newSnail = new Snail(this, windowHeight, startPosition, _player);
+                    int helperId = _helperList.Count; // Or any other unique value
+                    HelperFish newHelper = new HelperFish(this, windowHeight, startPosition, _player, helperId);
 
-                    AddSnail(newSnail);
+
+                    AddHelper(newHelper);
                     return true;
                 }
 
-                Console.WriteLine("Not enough money to buy Snail.");
+                Console.WriteLine("Not enough money to buy Helper.");
                 return false;
             }
 
@@ -192,7 +197,7 @@ namespace FishTankSimulator
             UpdateExorticFish(deltaTime, windowWidth, windowHeight);
             UpdateFood(deltaTime, windowHeight);
             UpdatePredators(deltaTime, windowWidth, windowHeight);
-            UpdateSnails(deltaTime, windowWidth, windowHeight);
+            UpdateHelper(deltaTime, windowWidth, windowHeight);
             // Draw the weapon effect regardless of clickHandled to allow interaction with weapon while keeping other interactions intact    
         }
         private void UpdateFish(float deltaTime, int windowWidth, int windowHeight)
@@ -213,7 +218,7 @@ namespace FishTankSimulator
         {
             // Handle spawning predators
             _exoticFishSpawnTimer += deltaTime;
-            if (_exoticFishSpawnTimer >= _exoticFishSpawnInterval)
+            if (_exoticFishSpawnTimer >= _exoticFishSpawnInterval && _exoticFishList.Count < 1)
             {
                 SpawnExoticFish(windowHeight);
                 _exoticFishSpawnTimer = 0f;
@@ -234,7 +239,7 @@ namespace FishTankSimulator
                 exoticFish.Update(deltaTime, windowWidth, windowHeight);
 
                 // Remove predator if it leaves the tank
-                if (exoticFish.Position.X < -200 || exoticFish.Position.X > windowWidth + 200)
+                if (exoticFish.Position.X < -100 || exoticFish.Position.X > windowWidth + 100)
                 {
                     Console.WriteLine($"Predator at index {i} has left the tank. Removing it.");
                     _exoticFishList.RemoveAt(i);
@@ -243,12 +248,12 @@ namespace FishTankSimulator
         }
 
 
-        private void UpdateSnails(float deltaTime, int windowWidth, int windowHeight)
+        private void UpdateHelper(float deltaTime, int windowWidth, int windowHeight)
         {
-            for (int i = _snailList.Count - 1; i >= 0; i--)
+            for (int i = _helperList.Count - 1; i >= 0; i--)
             {
-                var snail = _snailList[i];
-                snail.Update(deltaTime, windowWidth, windowHeight);
+                var helper = _helperList[i];
+                helper.Update(deltaTime, windowWidth, windowHeight);
             }
         }
 
@@ -450,8 +455,8 @@ namespace FishTankSimulator
             foreach (var exoticFish in _exoticFishList)
                 exoticFish.Draw(deltaTime);
 
-            foreach (var snail in _snailList)
-                snail.Draw(deltaTime);
+            foreach (var helper in _helperList)
+                helper.Draw(deltaTime);
 
             DrawHUD(windowWidth);
             _shop.Weapon.HandleWeaponEffect(null, deltaTime, _player);
@@ -470,12 +475,12 @@ namespace FishTankSimulator
             DrawTextWithCustomFont($"Level: {Player.GameLevel}", new Vector2(windowWidth - 500, 20));
 
             // Draw buttons and handle clicks using background images
-            if (DrawButton("Upgrade", new Rectangle(windowWidth - 200, 20, 100, 30), "sprites/button.png", Color.LightGray, Color.White))
+            if (DrawButton("Upgrade", new Rectangle(windowWidth - 200, 20, 100, 30), Color.LightGray, Color.White))
             {
                 _upgrade.SetIsActive();
             }
 
-            if (DrawButton("Menu", new Rectangle(windowWidth - 200, 70, 100, 30), "sprites/button.png", Color.LightGray, Color.White))
+            if (DrawButton("Menu", new Rectangle(windowWidth - 200, 70, 100, 30), Color.LightGray, Color.White))
             {
                 _inGameMenu.IsMenuVisible = !_inGameMenu.IsMenuVisible; // Activate the menu state
             }
@@ -486,59 +491,92 @@ namespace FishTankSimulator
             Raylib.DrawTextEx(customFont, text, position, fontSize, 2, Color.Gold);
         }
 
-        private bool DrawButton(string label, Rectangle rect, string imagePath, Color hoverColor, Color textColor)
+        private bool DrawButton(string label, Rectangle rect, Color hoverColor, Color textColor)
         {
-            // Load the button texture (background image)
-            Texture2D buttonTexture = Raylib.LoadTexture(imagePath);
+            Texture2D buttonTexture;
 
-            // Scale the texture to fit the button
-            int buttonWidth = (int)rect.Width;
-            int buttonHeight = (int)rect.Height;
+            try
+            {
+                // Load the button texture (background image)
+                buttonTexture = ButtonTexture;
+            }
+            catch (OutOfMemoryException ex)
+            {
+                Console.WriteLine($"Memory error while loading button texture: {ex.Message}");
+                return false; // Return false to indicate the button was not drawn due to an error
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Unexpected error while loading button texture: {ex.Message}");
+                return false;
+            }
 
-            // Check if the mouse is over the button
-            bool isHovered = Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(), rect);
+            try
+            {
+                // Scale the texture to fit the button
+                int buttonWidth = (int)rect.Width;
+                int buttonHeight = (int)rect.Height;
 
-            // Draw the button texture (background image) and apply the hover effect
-            Raylib.DrawTexturePro(
-                buttonTexture, 
-                new Rectangle(0, 0, buttonTexture.Width, buttonTexture.Height),  // Source rectangle (whole image)
-                new Rectangle(rect.X, rect.Y, buttonWidth, buttonHeight),       // Destination rectangle (scaled size)
-                Vector2.Zero,                                                   // Origin (no offset)
-                0f,                                                              // Rotation (no rotation)
-                isHovered ? hoverColor : Color.White                              // Apply hover effect if needed
-            );
+                // Check if the mouse is over the button
+                bool isHovered = Raylib.CheckCollisionPointRec(Raylib.GetMousePosition(), rect);
 
-            // Draw the button label
-            int fontSize = 20;
-            Vector2 textSize = Raylib.MeasureTextEx(customFont, label, fontSize, 2);
-            Vector2 textPosition = new Vector2(
-                rect.X + (rect.Width - textSize.X) / 2,
-                rect.Y + (rect.Height - textSize.Y) / 2
-            );
-            Raylib.DrawTextEx(customFont, label, textPosition, fontSize, 2, textColor);
+                // Draw the button texture (background image) and apply the hover effect
+                Raylib.DrawTexturePro(
+                    buttonTexture,
+                    new Rectangle(0, 0, buttonTexture.Width, buttonTexture.Height), // Source rectangle (whole image)
+                    new Rectangle(rect.X, rect.Y, buttonWidth, buttonHeight),      // Destination rectangle (scaled size)
+                    Vector2.Zero,                                                 // Origin (no offset)
+                    0f,                                                           // Rotation (no rotation)
+                    isHovered ? hoverColor : Color.White                          // Apply hover effect if needed
+                );
 
-            // Return true if the button is clicked
-            return isHovered && Raylib.IsMouseButtonPressed(MouseButton.Left);
+                // Draw the button label
+                int fontSize = 20;
+                Vector2 textSize = Raylib.MeasureTextEx(customFont, label, fontSize, 2);
+                Vector2 textPosition = new Vector2(
+                    rect.X + (rect.Width - textSize.X) / 2,
+                    rect.Y + (rect.Height - textSize.Y) / 2
+                );
+                Raylib.DrawTextEx(customFont, label, textPosition, fontSize, 2, textColor);
+
+                // Return true if the button is clicked
+                return isHovered && Raylib.IsMouseButtonPressed(MouseButton.Left);
+            }
+            catch (OutOfMemoryException ex)
+            {
+                Console.WriteLine($"Memory error while drawing button: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Unexpected error while drawing button: {ex.Message}");
+            }
+
+            return false; // Return false if any exception occurred
         }
+
 
         private bool IsButtonClicked(int windowWidth)
         {
+            try{
             // Check for "Upgrade" button click using background image
-            if (DrawButton("Upgrade", new Rectangle(windowWidth - 200, 20, 100, 30), "sprites/button.png", Color.LightGray, Color.White))
+            if (DrawButton("Upgrade", new Rectangle(windowWidth - 200, 20, 100, 30), Color.LightGray, Color.White))
             {
                 return true;
             }
 
             // Check for "Menu" button click using background image
-            if (DrawButton("Menu", new Rectangle(windowWidth - 200, 70, 100, 30), "sprites/button.png", Color.LightGray, Color.White))
+            if (DrawButton("Menu", new Rectangle(windowWidth - 200, 70, 100, 30), Color.LightGray, Color.White))
             {
                 return true;
+            }
+            }
+            catch (OutOfMemoryException ex)
+            {
+                Console.WriteLine($"Memory error while drawing button: {ex.Message}");
             }
 
             return false;
         }
-
-
 
         /// <summary>
         /// Unloads all textures used in the tank, including treasures.
@@ -549,7 +587,7 @@ namespace FishTankSimulator
                 fish.UnloadTextures();
 
             foreach (var coin in _coinList)
-                coin.UnloadTextures();
+                Coin.UnloadSharedTextures();
 
             foreach (var treasure in _treasureList)
                 treasure.UnloadTextures();;
@@ -557,8 +595,8 @@ namespace FishTankSimulator
             foreach (var predator in _predatorFishList)
                 predator.UnloadTextures(); // Unload predator textures
 
-            foreach (var snail in _snailList)
-                snail.UnloadTextures();
+            foreach (var helper in _helperList)
+                helper.UnloadTextures();
 
             _shop.UnloadTextures();
             _inGameMenu.Unload();
@@ -688,26 +726,14 @@ namespace FishTankSimulator
             get => _coinList;
             set => _coinList = value;
         }
-        // Properties
-        public List<Food> FoodList
-        {
-            get => _foodList;
-            private set => _foodList = value;
-        }
-        public List<Treasure> TreasureList => _treasureList;
-        public int Money => _player.Money;
 
         /// <summary>
         /// Adds a new treasure to the tank.
         /// </summary>
-        public void AddSnail(Snail snail)
+        public void AddHelper(HelperFish helper)
         {
-            if(_snailList.Count < _player.MaxSnail)
-                _snailList.Add(snail);
-        }
-        public void RemoveSnail(Snail snail)
-        {
-            _snailList.Remove(snail);
+            if(_helperList.Count < _player.MaxHelper)
+                _helperList.Add(helper);
         }
 
         /// <summary>

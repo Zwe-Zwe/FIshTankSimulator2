@@ -4,22 +4,22 @@ using System.Numerics;
 namespace FishTankSimulator{
     public class Player{
         private static int gameLevel;
-        private int snailLevel;
+        private int helperLevel;
         private int foodLevel;
         private int foodCountLevel;
         private int weaponLevel;
         private int weaponCountLevel;
         private int maxFish;
-        private int maxSnail;
+        private int maxHelper;
         private int money;
         public Player(){
             gameLevel = 1;
-            snailLevel = 1;
+            helperLevel = 1;
             foodLevel = 1;
             weaponLevel = 1;
             maxFish = 5;
-            maxSnail = 0;
-            money = 3000000;
+            maxHelper = 0;
+            money = 3000000 ;
             foodCountLevel = 1;
             weaponCountLevel = 1;
         }
@@ -38,9 +38,9 @@ namespace FishTankSimulator{
             get { return gameLevel; }
             set { gameLevel = value; }
         }
-        public int SnailLevel{
-            get { return snailLevel; }
-            set { snailLevel = value; }
+        public int HelperLevel{
+            get { return helperLevel; }
+            set { helperLevel = value; }
         }
         public int FoodLevel{
             get { return foodLevel; }
@@ -54,9 +54,9 @@ namespace FishTankSimulator{
             get { return maxFish; }
             set { maxFish = value; }
         }
-        public int MaxSnail{
-            get { return maxSnail; }
-            set { maxSnail = value; }
+        public int MaxHelper{
+            get { return maxHelper; }
+            set { maxHelper = value; }
         }
         public int Money{
             get { return money; }

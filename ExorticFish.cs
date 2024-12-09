@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Numerics;
 using Raylib_cs;
 
@@ -6,53 +7,75 @@ namespace FishTankSimulator
 {
     public class ExoticFish : Fish
     {
-        private float appearanceTimer;
-        private float activeDuration;
-        private bool isLeaving;
-        private bool hasDroppedTreasure;
-        private Animator LeftAnimator;
-        private Animator RightAnimator;
+        // Static cache to store textures, shared across all instances of ExoticFish
+        private static readonly Dictionary<string, List<Texture2D>> TextureCache = new();
 
+        private float appearanceTimer; // Time until the fish appears
+        private float activeDuration; // How long the fish remains active
+        private bool isLeaving; // Whether the fish is leaving the tank
+        private bool hasDroppedTreasure; // Whether the fish has already dropped a treasure
+
+        private Animator LeftAnimator; // Animator for leftward movement
+        private Animator RightAnimator; // Animator for rightward movement
+
+        // Event triggered when the fish drops a treasure
         public event Action<Treasure> OnTreasureDropped;
 
         public ExoticFish(Vector2 initialPosition, Tank tank) : base(tank)
         {
             Position = initialPosition;
             Speed = new Vector2(700, 100); // Exotic fish move slower and more gracefully
-            LeftAnimator = new Animator(LoadTextures("sprites/red/swim_to_left"), 0.1f);
-            RightAnimator = new Animator(LoadTextures("sprites/red/swim_to_right"), 0.1f);
+
+            // Load animators using cached textures
+            LeftAnimator = new Animator(GetTextures("sprites/gold/swim_to_left"), 0.1f);
+            RightAnimator = new Animator(GetTextures("sprites/gold/swim_to_right"), 0.1f);
 
             IsMovingLeft = Speed.X < 0;
 
             ResetAppearanceTimer();
-            activeDuration = 10f; // Exotic fish stays for 5 seconds
+            activeDuration = 5f; // Exotic fish stays for 5 seconds
             hasDroppedTreasure = false;
         }
 
+        /// <summary>
+        /// Retrieves textures from the cache or loads them if not already cached.
+        /// </summary>
+        private static List<Texture2D> GetTextures(string basePath)
+        {
+            if (!TextureCache.ContainsKey(basePath))
+            {
+                List<Texture2D> textures = LoadTextures(basePath);
+                TextureCache[basePath] = textures;
+            }
+            return TextureCache[basePath];
+        }       
+        /// <summary>
+        /// Resets the appearance timer to a random value and marks the fish as inactive.
+        /// </summary>
         private void ResetAppearanceTimer()
         {
-            appearanceTimer = Raylib.GetRandomValue(3, 8); // Random delay before appearing
+            appearanceTimer = Raylib.GetRandomValue(5, 10); // Random delay before appearing
             isLeaving = false;
         }
 
-        public override void Update(float deltaTime, int windowWidth, int windowHeight)
+        public override void Update(float deltaTime)
         {
-            // Appearance delay logic
+            // Handle appearance delay
             if (appearanceTimer > 0)
             {
                 appearanceTimer -= deltaTime;
                 return;
             }
 
-            // Leaving the tank logic
+            // Handle leaving logic
             if (isLeaving)
             {
-                LeaveTank(deltaTime, windowWidth);
+                LeaveTank(deltaTime);
                 return;
             }
 
-            // Drop treasure at the midpoint of the active duration
-            if (!hasDroppedTreasure && activeDuration <= 5f) // Halfway through 10 seconds
+            // Drop treasure at midpoint of the active duration
+            if (!hasDroppedTreasure && activeDuration <= 3f)
             {
                 DropTreasure();
             }
@@ -60,7 +83,7 @@ namespace FishTankSimulator
             // Regular movement logic
             Position += Speed * deltaTime;
 
-            // Check for X-axis wall collisions with a threshold
+            // Handle X-axis wall collisions
             const float collisionThreshold = 10f;
 
             if (Position.X <= collisionThreshold) // Left wall collision
@@ -69,15 +92,15 @@ namespace FishTankSimulator
                 Speed = new Vector2(Math.Abs(Speed.X), Speed.Y);
                 IsMovingLeft = false;
             }
-            else if (Position.X + 100 >= windowWidth - collisionThreshold) // Right wall collision
+            else if (Position.X + 100 >= Program.windowWidth - collisionThreshold) // Right wall collision
             {
-                Position = new Vector2(windowWidth - 100 - collisionThreshold, Position.Y);
+                Position = new Vector2(Program.windowWidth - 100 - collisionThreshold, Position.Y);
                 Speed = new Vector2(-Math.Abs(Speed.X), Speed.Y);
                 IsMovingLeft = true;
             }
 
-            // Check for Y-axis wall collisions
-            if (Position.Y <= 0 || Position.Y + 100 >= windowHeight)
+            // Handle Y-axis wall collisions
+            if (Position.Y <= 0 || Position.Y + 100 >= Program.windowHeight)
             {
                 Speed = new Vector2(Speed.X, -Speed.Y);
             }
@@ -90,20 +113,23 @@ namespace FishTankSimulator
             else if (!isLeaving)
             {
                 isLeaving = true;
-                SetLeaveDirection(windowWidth);
+                SetLeaveDirection();
             }
         }
 
-        private void LeaveTank(float deltaTime, int windowWidth)
+        /// <summary>
+        /// Handles the logic for the fish leaving the tank.
+        /// </summary>
+        private void LeaveTank(float deltaTime)
         {
             Position += Speed * deltaTime;
 
             // Check if the fish has exited the screen
-            if (Position.X < -200 || Position.X > windowWidth + 200)
+            if (Position.X < -100 || Position.X > Program.windowWidth + 100)
             {
                 ResetAppearanceTimer();
                 activeDuration = 20f;
-                Position = GetRandomPosition(windowWidth);
+                Position = GetRandomPosition(Program.windowWidth);
                 hasDroppedTreasure = false;
             }
 
@@ -111,9 +137,12 @@ namespace FishTankSimulator
             IsMovingLeft = Speed.X < 0;
         }
 
-        private void SetLeaveDirection(int windowWidth)
+        /// <summary>
+        /// Sets the direction for the fish to leave the tank.
+        /// </summary>
+        private void SetLeaveDirection()
         {
-            if (Position.X < windowWidth / 2)
+            if (Position.X < Program.windowWidth / 2)
             {
                 Speed = new Vector2(-Math.Abs(Speed.X), 0); // Maintain original speed magnitude
             }
@@ -125,12 +154,18 @@ namespace FishTankSimulator
             IsMovingLeft = Speed.X < 0;
         }
 
+        /// <summary>
+        /// Generates a random starting position for the fish.
+        /// </summary>
         private Vector2 GetRandomPosition(int windowHeight)
         {
             int y = Raylib.GetRandomValue(100, windowHeight - 100);
             return new Vector2(-100, y);
         }
 
+        /// <summary>
+        /// Drops a treasure at the fish's current position.
+        /// </summary>
         private void DropTreasure()
         {
             if (hasDroppedTreasure) return;
@@ -151,23 +186,13 @@ namespace FishTankSimulator
 
             Rectangle srcRect = new Rectangle(0, 0, currentSprite.Width, currentSprite.Height);
             Rectangle destRect = new Rectangle(
-                (int)Position.X,
-                (int)Position.Y,
-                (int)(currentSprite.Width * scale),
-                (int)(currentSprite.Height * scale)
+                Position.X,
+                Position.Y,
+                currentSprite.Width * scale,
+                currentSprite.Height * scale
             );
 
             Raylib.DrawTexturePro(currentSprite, srcRect, destRect, Vector2.Zero, 0.0f, Color.White);
-        }
-
-        public bool IsWithinBounds(Vector2 point)
-        {
-            float width = RightAnimator.GetCurrentFrame(0).Width * 0.5f;
-            float height = RightAnimator.GetCurrentFrame(0).Height * 0.5f;
-
-            Rectangle bounds = new Rectangle(Position.X, Position.Y, width, height);
-
-            return Raylib.CheckCollisionPointRec(point, bounds);
         }
     }
 }

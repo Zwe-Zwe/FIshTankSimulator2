@@ -7,242 +7,302 @@ namespace FishTankSimulator
 {
     public class PredatorFish : Fish
     {
-        PredatorFishType _type;
-        private float appearanceTimer;
-        private float activeDuration;
-        private bool isLeaving;
-        private CoinFish targetFish;
-        private bool isEating;
-        private float eatingTimer = 1f;
-        private Animator LeftAnimatorSnapping;
-        private Animator RightAnimatorSnapping;
+        // Static cache for storing loaded textures to avoid reloading
+        private static readonly Dictionary<string, List<Texture2D>> TextureCache = new();
+
+        private readonly PredatorFishType _type;
+        private float _appearanceTimer;
+        private float _activeDuration;
+        private bool _isLeaving;
+        private CoinFish _targetFish;
+        private bool _isEating;
+        private float _eatingTimer = 1f;
+
+        private Animator _leftAnimator;
+        private Animator _rightAnimator;
+        private Animator _leftAnimatorSnapping;
+        private Animator _rightAnimatorSnapping;
+
         public event Action<Fish> OnFishEaten;
-        
 
         public PredatorFish(Vector2 initialPosition, Tank tank, PredatorFishType type) : base(tank)
         {
             Position = initialPosition;
             _type = type;
+
+            // Initialize health based on the predator type
             float baseHealth = type switch
             {
-                PredatorFishType.Small => 200f,      // Guppy has low health
-                PredatorFishType.Medium => 400f,   // Snapper has medium health
-                PredatorFishType.Big => 800f,  // Flounder has high health
+                PredatorFishType.Small => 200f,
+                PredatorFishType.Medium => 400f,
+                PredatorFishType.Big => 800f,
                 _ => 200f
             };
             Health = new Health(baseHealth);
+
+            // Initialize speed based on the predator type
             Vector2 baseSpeed = type switch
             {
-                PredatorFishType.Small => new Vector2(70, 30),  
-                PredatorFishType.Medium => new Vector2(85, 40), 
-                PredatorFishType.Big => new Vector2(100, 50),   
+                PredatorFishType.Small => new Vector2(70, 30),
+                PredatorFishType.Medium => new Vector2(85, 40),
+                PredatorFishType.Big => new Vector2(100, 50),
                 _ => new Vector2(70, 30)
             };
             Speed = baseSpeed;
-            // Load predator textures for swimming
-            LeftAnimator = new Animator(LoadTextures("sprites/shark/swim_to_left"), 0.1f);
-            RightAnimator = new Animator(LoadTextures("sprites/shark/swim_to_right"), 0.1f);
 
-            // Load predator textures for snapping (eating)
-            LeftAnimatorSnapping = new Animator(LoadTextures("sprites/shark/swim_to_left_snapping"), 0.1f);
-            RightAnimatorSnapping = new Animator(LoadTextures("sprites/shark/swim_to_right_snapping"), 0.1f);
+            // Load textures and initialize animators
+            _leftAnimator = new Animator(GetCachedTextures("sprites/shark/swim_to_left"), 0.1f);
+            _rightAnimator = new Animator(GetCachedTextures("sprites/shark/swim_to_right"), 0.1f);
+            _leftAnimatorSnapping = new Animator(GetCachedTextures("sprites/shark/swim_to_left_snapping"), 0.1f);
+            _rightAnimatorSnapping = new Animator(GetCachedTextures("sprites/shark/swim_to_right_snapping"), 0.1f);
 
+            // Determine initial direction
             IsMovingLeft = Speed.X < 0;
 
+            // Initialize timers and state
             ResetAppearanceTimer();
-            activeDuration = 10f;
-
-            
+            _activeDuration = 10f;
         }
 
+        /// <summary>
+        /// Load or retrieve textures from the cache.
+        /// </summary>
+         private static List<Texture2D> GetCachedTextures(string basePath)
+        {
+            if (!TextureCache.ContainsKey(basePath))
+            {
+                TextureCache[basePath] = LoadTextures(basePath);
+            }
+
+            return TextureCache[basePath];
+        }
+
+        /// <summary>
+        /// Reset the timer for when the predator appears.
+        /// </summary>
         private void ResetAppearanceTimer()
         {
-            appearanceTimer = Raylib.GetRandomValue(7, 12); // Random delay before appearing
-            isLeaving = false;
+            _appearanceTimer = Raylib.GetRandomValue(7, 12); // Random delay before appearing
+            _isLeaving = false;
         }
 
-        public override void Update(float deltaTime, int windowWidth, int windowHeight)
+        /// <summary>
+        /// Update the predator's state.
+        /// </summary>
+        public override void Update(float deltaTime)
         {
-            
-            // Appearance delay logic
-            if (appearanceTimer > 0)
+            // Handle appearance delay
+            if (_appearanceTimer > 0)
             {
-                appearanceTimer -= deltaTime;
+                _appearanceTimer -= deltaTime;
                 return;
             }
 
-            // Leaving the tank logic
-            if (isLeaving)
+            // Handle leaving the tank
+            if (_isLeaving)
             {
-                LeaveTank(deltaTime, windowWidth);
+                LeaveTank(deltaTime);
                 return;
             }
 
-            // Active duration logic
-            activeDuration -= deltaTime;
-            if (activeDuration <= 0)
+            // Handle active duration
+            _activeDuration -= deltaTime;
+            if (_activeDuration <= 0)
             {
-                isLeaving = true;
-                SetLeaveDirection(windowWidth);
+                _isLeaving = true;
+                SetLeaveDirection();
                 return;
             }
 
-            // Regular movement logic
+            // Move the predator
             Position += Speed * deltaTime;
 
-            // Bounce off the walls
-            if (Position.X <= 0 || Position.X + 100 >= windowWidth)
+            // Bounce off the tank walls
+            if (Position.X <= 0 || Position.X + 100 >= Program.windowWidth)
             {
                 Speed = new Vector2(-Speed.X, Speed.Y);
                 IsMovingLeft = Speed.X < 0;
             }
 
-            if (Position.Y <= 0 || Position.Y + 100 >= windowHeight)
+            if (Position.Y <= 0 || Position.Y + 100 >= Program.windowHeight)
             {
                 Speed = new Vector2(Speed.X, -Speed.Y);
             }
 
-            // Target and eat fish logic
-            targetFish = Tank.FindNearestFish(Position);
-            if (targetFish != null)
+            // Target and chase fish
+            _targetFish = Tank.FindNearestFish(Position);
+            if (_targetFish != null)
             {
-                FollowAndEatFish(targetFish, deltaTime);
+                FollowAndEatFish(_targetFish, deltaTime);
             }
             else
             {
-                isEating = false;
+                _isEating = false;
             }
         }
 
-
-        private void LeaveTank(float deltaTime, int windowWidth)
+        /// <summary>
+        /// Logic for the predator leaving the tank.
+        /// </summary>
+        private void LeaveTank(float deltaTime)
         {
             Position += Speed * deltaTime;
 
-            // Check if the fish has exited the screen
-            if (Position.X < -100 || Position.X > windowWidth + 100)
+            // Check if the predator has exited the tank
+            if (Position.X < -100 || Position.X > Program.windowWidth + 100)
             {
                 ResetAppearanceTimer();
-                activeDuration = 10f;
-                Position = GetRandomPosition(windowWidth);
+                _activeDuration = 10f;
+                Position = GetRandomPosition(Program.windowWidth);
             }
 
-            // Ensure the direction is updated continuously while leaving
+            // Continuously update direction
             IsMovingLeft = Speed.X < 0;
         }
 
-
-        private void SetLeaveDirection(int windowWidth)
+        /// <summary>
+        /// Set the direction for leaving the tank.
+        /// </summary>
+        private void SetLeaveDirection()
         {
-            if (Position.X < windowWidth / 2)
+            if (Position.X < Program.windowWidth / 2)
             {
-                Speed = new Vector2(-200, 0); // Move left to exit
+                Speed = new Vector2(-200, 0); // Exit left
             }
             else
             {
-                Speed = new Vector2(200, 0); // Move right to exit
+                Speed = new Vector2(200, 0); // Exit right
             }
 
-            // Update direction-facing property
             IsMovingLeft = Speed.X < 0;
         }
 
-
+        /// <summary>
+        /// Get a random position for re-entering the tank.
+        /// </summary>
         private Vector2 GetRandomPosition(int windowHeight)
         {
             int y = Raylib.GetRandomValue(100, windowHeight - 100);
             return new Vector2(-100, y);
         }
 
+        /// <summary>
+        /// Follow and attempt to eat a fish.
+        /// </summary>
         private void FollowAndEatFish(CoinFish fish, float deltaTime)
         {
-            float baseSpeed = 100f; // Consistent speed for chasing
             Vector2 direction = Vector2.Normalize(fish.Position - Position);
-            Speed = direction * baseSpeed; // Apply consistent speed
+            Speed = direction * 100f; // Consistent chase speed
 
             Position += Speed * deltaTime;
-
             IsMovingLeft = Speed.X < 0;
 
             if (Vector2.Distance(Position, fish.Position) < 30f)
             {
-                isEating = true;
+                _isEating = true;
                 EatFish(fish);
             }
         }
 
-
+        /// <summary>
+        /// Eat the targeted fish.
+        /// </summary>
         public void EatFish(CoinFish fish)
         {
             OnFishEaten?.Invoke(fish);
             Tank.RemoveFish(fish);
             Health.Increase(50f);
-            isEating = true;
+            _isEating = true;
         }
 
+        /// <summary>
+        /// Draw the predator fish with animations.
+        /// </summary>
         public override void Draw(float deltaTime)
         {
-            if (appearanceTimer > 0) return;
+            if (_appearanceTimer > 0) return;
 
             float scale = _type switch
             {
-                PredatorFishType.Small => 0.3f,   // Small fish are smaller
-                PredatorFishType.Medium => 0.45f,  // Medium fish have a moderate size
-                PredatorFishType.Big => 0.65f,     // Big fish are larger
-                _ => 0.4f                         // Default scale // Define a scale factor. Adjust this to make the fish larger or smaller.
+                PredatorFishType.Small => 0.3f,
+                PredatorFishType.Medium => 0.45f,
+                PredatorFishType.Big => 0.65f,
+                _ => 0.4f
             };
 
-            Texture2D currentSprite = isEating
-                ? (IsMovingLeft ? LeftAnimatorSnapping.GetCurrentFrame(deltaTime) : RightAnimatorSnapping.GetCurrentFrame(deltaTime))
-                : (IsMovingLeft ? LeftAnimator.GetCurrentFrame(deltaTime) : RightAnimator.GetCurrentFrame(deltaTime));
+            Texture2D currentSprite = _isEating
+                ? (IsMovingLeft ? _leftAnimatorSnapping.GetCurrentFrame(deltaTime) : _rightAnimatorSnapping.GetCurrentFrame(deltaTime))
+                : (IsMovingLeft ? _leftAnimator.GetCurrentFrame(deltaTime) : _rightAnimator.GetCurrentFrame(deltaTime));
 
-            // Adjust destination rectangle size by scaling
             Rectangle srcRect = new Rectangle(0, 0, currentSprite.Width, currentSprite.Height);
             Rectangle destRect = new Rectangle(
                 (int)Position.X,
                 (int)Position.Y,
-                (int)(currentSprite.Width * scale), 
+                (int)(currentSprite.Width * scale),
                 (int)(currentSprite.Height * scale)
             );
 
-            // Draw the texture with the specified scaling
             Raylib.DrawTexturePro(currentSprite, srcRect, destRect, Vector2.Zero, 0.0f, Color.White);
-
-            // Draw the health bar slightly above the sprite
             Health.Draw(new Vector2(Position.X, Position.Y - 10), 60, 5);
 
-            if (isEating)
+            if (_isEating)
             {
                 ResetEatingAnimation(deltaTime);
             }
-
         }
 
         public bool IsWithinBounds(Vector2 point)
         {
-            float width = RightAnimator.GetCurrentFrame(0).Width * 0.5f;
-            float height = RightAnimator.GetCurrentFrame(0).Height * 0.5f;
+            // Scale factor based on predator type
+            float scale = _type switch
+            {
+                PredatorFishType.Small => 0.3f,
+                PredatorFishType.Medium => 0.45f,
+                PredatorFishType.Big => 0.65f,
+                _ => 0.4f
+            };
 
+            // Calculate the scaled width and height of the sprite
+            float width = _rightAnimator.GetCurrentFrame(0).Width * scale;
+            float height = _leftAnimator.GetCurrentFrame(0).Height * scale;
+
+            // Create a rectangle representing the bounds of the predator
             Rectangle bounds = new Rectangle(Position.X, Position.Y, width, height);
 
+            // Check if the given point is within the rectangle
             return Raylib.CheckCollisionPointRec(point, bounds);
         }
 
+
+        /// <summary>
+        /// Reset the eating animation.
+        /// </summary>
         private void ResetEatingAnimation(float deltaTime)
         {
-            eatingTimer += deltaTime;
-
-            if (eatingTimer >= 1.0f)
+            _eatingTimer += deltaTime;
+            if (_eatingTimer >= 1.0f)
             {
-                isEating = false;
-                eatingTimer = 0f;
+                _isEating = false;
+                _eatingTimer = 0f;
             }
         }
 
+        /// <summary>
+        /// Handle being attacked.
+        /// </summary>
         public void GetAttacked(float damage)
         {
             Health.Reduce(damage);
-            Console.WriteLine("Predator fish attacked! Damage: " + damage);
+            Console.WriteLine($"Predator fish attacked! Damage: {damage}");
+        }
+
+        public void UnloadTextures()
+        {
+            // Unload textures used by the animators
+            _leftAnimator.UnloadTextures();
+            _rightAnimator.UnloadTextures();
+            _leftAnimatorSnapping.UnloadTextures();
+            _rightAnimatorSnapping.UnloadTextures();
         }
 
 

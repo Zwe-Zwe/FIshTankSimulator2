@@ -8,16 +8,17 @@ namespace FishTankSimulator
     public class Coin : DropItems
     {
         public CoinType Type { get; private set; }
+        private static readonly Dictionary<CoinType, List<Texture2D>> SharedTextures = new();
         private List<Texture2D> _animationFrames;
         private int _currentFrame;
         private float _frameTime;
         private float _animationTimer;
         private float _lifetime;
-        private const float MaxLifetime = 4.0f;
+        private const float MaxLifetime = 3.0f;
         private bool _isAtBottom;
 
         public Coin(Vector2 position, CoinType type)
-            : base(position, GetCoinTexturePath(type), 100f) // Use base class constructor
+            : base(position, 100f) // Use base class constructor
         {
             Type = type;
             _animationFrames = LoadAnimationFrames(type);
@@ -26,12 +27,6 @@ namespace FishTankSimulator
             _animationTimer = 0;
             _lifetime = MaxLifetime;
             _isAtBottom = false;
-        }
-
-        public override void OnPickup()
-        {
-            IsActive = false;
-            Console.WriteLine($"Coin collected! Type: {Type}, Value: {GetValue()}");
         }
 
         public override int GetValue()
@@ -47,17 +42,17 @@ namespace FishTankSimulator
 
         public bool IsClicked(Vector2 mousePosition)
         {
-            Rectangle coinRect = new Rectangle(Position.X, Position.Y, _animationFrames[0].Width, _animationFrames[0].Height);
+            Rectangle coinRect = new Rectangle(position.X, position.Y, _animationFrames[0].Width, _animationFrames[0].Height);
             return Raylib.CheckCollisionPointRec(mousePosition, coinRect);
         }
 
         public override void Update(float deltaTime, int windowHeight)
         {
-            if (!_isAtBottom && Position.Y < windowHeight - _animationFrames[0].Height + 50)
+            if (!_isAtBottom && position.Y < windowHeight - _animationFrames[0].Height + 50)
             {
-                Position = new Vector2(Position.X, Position.Y + 100 * deltaTime);
+                position = new Vector2(position.X, position.Y + 100 * deltaTime);
             }
-            else if (!_isAtBottom && Position.Y >= windowHeight - _animationFrames[0].Height + 50)
+            else if (!_isAtBottom && position.Y >= windowHeight - _animationFrames[0].Height + 50)
             {
                 _isAtBottom = true;
             }
@@ -85,47 +80,44 @@ namespace FishTankSimulator
                 CoinType.Gold => 0.5f,
                 _ => throw new ArgumentException("Invalid CoinType")
             };
-            Raylib.DrawTextureEx(currentSprite, Position, 0.0f, scaleFactor, Color.White);
+            Raylib.DrawTextureEx(currentSprite, position, 0.0f, scaleFactor, Color.White);
         }
 
-        public void UnloadTextures()
+        public static void UnloadSharedTextures()
         {
-            foreach (var frame in _animationFrames)
+            foreach (var frames in SharedTextures.Values)
             {
-                Raylib.UnloadTexture(frame);
+                foreach (var frame in frames)
+                {
+                    Raylib.UnloadTexture(frame);
+                }
             }
+            SharedTextures.Clear();
         }
 
         private List<Texture2D> LoadAnimationFrames(CoinType type)
         {
-            string folderName = type switch
+            if (!SharedTextures.ContainsKey(type))
             {
-                CoinType.Copper => "sprites/bronze_coin",
-                CoinType.Silver => "sprites/silver_coin",
-                CoinType.Gold => "sprites/gold_coin",
-                _ => throw new ArgumentException("Invalid CoinType")
-            };
+                string folderName = type switch
+                {
+                    CoinType.Copper => "sprites/bronze_coin",
+                    CoinType.Silver => "sprites/silver_coin",
+                    CoinType.Gold => "sprites/gold_coin",
+                    _ => throw new ArgumentException("Invalid CoinType")
+                };
 
-            List<Texture2D> frames = new List<Texture2D>();
-            for (int i = 1; i <= 6; i++)
-            {
-                frames.Add(Raylib.LoadTexture($"{folderName}/{i:D2}.png"));
+                List<Texture2D> frames = new List<Texture2D>();
+                for (int i = 1; i <= 6; i++)
+                {
+                    frames.Add(Raylib.LoadTexture($"{folderName}/{i:D2}.png"));
+                }
+                SharedTextures[type] = frames;
             }
-            return frames;
+
+            return SharedTextures[type];
         }
 
-        private static string GetCoinTexturePath(CoinType type)
-        {
-            return type switch
-            {
-                CoinType.Copper => "sprites/bronze_coin/1.png",
-                CoinType.Silver => "sprites/silver_coin/1.png",
-                CoinType.Gold => "sprites/gold_coin/1.png",
-                _ => throw new ArgumentException("Invalid CoinType")
-            };
-        }
-
-        // New method to check if the coin has expired
         public bool IsExpired()
         {
             return _lifetime <= 0;

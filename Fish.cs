@@ -25,7 +25,7 @@ namespace FishTankSimulator{
         {
         }
 
-        public abstract void Update(float deltaTime, int windowWidth, int windowHeight);
+    public abstract void Update(float deltaTime);
 
     public abstract void Draw(float deltaTime);
 
@@ -35,7 +35,7 @@ namespace FishTankSimulator{
         set { _tank = value; }
     }
 
-    public List<Texture2D> LoadTextures(string folder)
+    public static List<Texture2D> LoadTextures(string folder)
         {
             List<Texture2D> textures = new();
             for (int i = 1; i <= 6; i++)

@@ -58,7 +58,7 @@ namespace FishTankSimulator
                 "Weapon Damage",
                 "Food Count",
                 "Weapon Count",
-                "Snail Level"
+                "Helper Level"
             };
 
             itemActions = new Action[]
@@ -68,7 +68,7 @@ namespace FishTankSimulator
                 () => _levelManagement.LevelUpWeaponLevel(),
                 () => _levelManagement.LevelUpFoodCount(),
                 () => _levelManagement.LevelUpWeaponCount(),
-                () => _levelManagement.LevelUpSnailLevel()
+                () => _levelManagement.LevelUpHelperLevel()
             };
         }
 
@@ -145,8 +145,8 @@ public void Draw(int windowWidth)
                 cost = _levelManagement.GetWeaponCountUpdateCost();
                 break;
             case 5:
-                currentLevel = _player.SnailLevel;
-                cost = _levelManagement.GetSnailUpdateCost();
+                currentLevel = _player.HelperLevel;
+                cost = _levelManagement.GetHelperUpdateCost();
                 break;
         }
 

@@ -5,18 +5,19 @@ namespace FishTankSimulator
 {
     public class Food : DropItems
     {
+        private static Texture2D sharedTexture;
         private Player _player;
         private int nutrientValue;
         public Food(Vector2 position, Player player)
-            : base(position, "sprites/fishfood.png", 100f) // Pass position, texture path, and fall speed to the parent class
+            : base(position, 100f) // Pass position, texture path, and fall speed to the parent class
         {
             _player = player;
-        }
+            if (sharedTexture.Id == 0)
+            {
+                sharedTexture = Raylib.LoadTexture("sprites/fishfood.png");
+            }
 
-        public override void OnPickup()
-        {
-            IsActive = false; // Mark the food as consumed
-            // Additional logic, such as increasing fish health, can be implemented here.
+            texture = sharedTexture;
         }
 
         public override void Update(float deltaTime, int windowHeight)
@@ -24,13 +25,37 @@ namespace FishTankSimulator
             
             nutrientValue = 40 + ((_player.FoodLevel - 1) * 5); // Calculate nutrient value based on food level
             
-            if (!IsActive) return;
+            if (!isActive) return;
 
-            Position = new Vector2(Position.X, Position.Y + fallSpeed * deltaTime);
+            position = new Vector2(position.X, position.Y + fallSpeed * deltaTime);
 
-            if (Position.Y >= windowHeight - texture.Height)
+            if (position.Y >= windowHeight - texture.Height)
             {
-                IsActive = false;
+                isActive = false;
+            }
+        }
+
+        public void Draw()
+        {
+            if (isActive)
+            {
+                Rectangle sourceRect = new Rectangle(0, 0, texture.Width, texture.Height);
+                float scaleFactor = 0.5f;
+                Rectangle destRect = new Rectangle(
+                    position.X,
+                    position.Y,
+                    texture.Width * scaleFactor,
+                    texture.Height * scaleFactor
+                );
+
+                Raylib.DrawTexturePro(
+                    texture,
+                    sourceRect,
+                    destRect,
+                    Vector2.Zero,
+                    0.0f,
+                    Color.White
+                );
             }
         }
 

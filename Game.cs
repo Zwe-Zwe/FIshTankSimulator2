@@ -8,8 +8,6 @@ namespace FishTankSimulator
     {
         private Player player;
         private LevelManagement levelManagement;
-        private int _windowWidth;
-        private int _windowHeight;
         private Menu _menu;
         private Shop _shop;
         private Tank _tank;
@@ -22,27 +20,25 @@ namespace FishTankSimulator
         private bool _inGame = false;
         private bool _clickConsumed = false;
         public static bool isQuitClicked = false;
-        public Game(int windowWidth, int windowHeight)
+        public Game()
         {
-            Raylib.InitWindow(windowWidth, windowHeight, "Fish Tank Simulator");
+            Raylib.InitWindow(Program.windowWidth, Program.windowHeight, "Fish Tank Simulator");
             Raylib.SetTargetFPS(60);
 
-            _windowWidth = windowWidth;
-            _windowHeight = windowHeight;
             player = new Player();
             _weapon = new Weapon();
             _shop = new Shop(_weapon, player);
             levelManagement = new LevelManagement(player, _shop);
             _menu = new Menu();
-            upgrade = new Upgrade(windowWidth, windowHeight, levelManagement, player);
-            _tank = new Tank(_shop, player, upgrade, windowWidth, windowHeight);
+            upgrade = new Upgrade(Program.windowWidth, Program.windowHeight, levelManagement, player);
+            _tank = new Tank(_shop, player, upgrade, Program.windowWidth, Program.windowHeight);
             _tankBackground = Raylib.LoadTexture("sprites/tank.png");
             if (_tankBackground.Id == 0)
             {
                 Console.WriteLine("Error loading tank background texture!");
             }
             _srcRect = new Rectangle(0, 0, _tankBackground.Width, _tankBackground.Height);
-            _destRect = new Rectangle(0, 0, _windowWidth, _windowHeight);
+            _destRect = new Rectangle(0, 0, Program.windowWidth, Program.windowHeight);
             _origin = new Vector2(0, 0);
         }
 
@@ -51,7 +47,7 @@ namespace FishTankSimulator
             set { isQuitClicked = value; }
         }
        
-        public void Run(int windowWidth)
+        public void Run()
         {
             while (!Raylib.WindowShouldClose() && !isQuitClicked)
             {
@@ -61,7 +57,7 @@ namespace FishTankSimulator
                 }
                 else
                 {
-                    HandleGame(windowWidth);
+                    HandleGame(Program.windowWidth);
                 }
             }
 
@@ -87,19 +83,19 @@ namespace FishTankSimulator
         }
 
         // In Game.HandleGame()
-        private void HandleGame(int windowWidth)
+        private void HandleGame()
         {
             float deltaTime = Raylib.GetFrameTime();
 
             // Pass clickConsumed to ensure clicks are not processed multiple times
-            _tank.Update(deltaTime, _windowWidth, _windowHeight, _clickConsumed);
+            _tank.Update(deltaTime, _clickConsumed);
             _clickConsumed = false; // Reset the clickConsumed flag for the next frame
 
             int? clickedFishIndex = _shop.GetClickedFishIndex();
             if (clickedFishIndex != null)
             {
                 int fishIndex = clickedFishIndex.Value;
-                if (_tank.TryBuyFish(fishIndex, _windowWidth, _windowHeight))
+                if (_tank.TryBuyFish(fishIndex))
                 {
                     Console.WriteLine($"Fish bought: {_shop.GetFishName(fishIndex)}");
                     _clickConsumed = true; // Mark the click as consumed for buying fish
@@ -113,7 +109,7 @@ namespace FishTankSimulator
             Raylib.DrawTexturePro(_tankBackground, _srcRect, _destRect, _origin, 0.0f, Color.White);
 
             _shop.Draw();
-            _tank.Draw(deltaTime, windowWidth);
+            _tank.Draw(deltaTime);
 
             Raylib.EndDrawing();
         }

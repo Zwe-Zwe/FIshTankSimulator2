@@ -29,7 +29,7 @@ namespace FishTankSimulator
                     _player.Money -= cost;
                     Player.GameLevel++;
                     Console.WriteLine("Game Level upgraded to: " + Player.GameLevel);
-                    UpdateMaxSnail();
+                    UpdateMaxHelper();
                     UpdateMaxFish();
                     _shop.UpdateShopItems();
                 }
@@ -44,26 +44,26 @@ namespace FishTankSimulator
             }
         }
 
-        public void LevelUpSnailLevel()
+        public void LevelUpHelperLevel()
         {
-            if (_player.SnailLevel < GetMaxSnailLevel())
+            if (_player.HelperLevel < GetMaxHelperLevel())
             {
                 // Check if the player has enough money
-                var cost = GetSnailUpdateCost();
+                var cost = GetHelperUpdateCost();
                 if (_player.Money >= cost)
                 {
                     _player.Money -= cost;
-                    _player.SnailLevel++;
-                    Console.WriteLine("Snail Level upgraded to: " + _player.SnailLevel);
+                    _player.HelperLevel++;
+                    Console.WriteLine("Helper Level upgraded to: " + _player.HelperLevel);
                 }
                 else
                 {
-                    Console.WriteLine("Not enough money to upgrade Snail Level.");
+                    Console.WriteLine("Not enough money to upgrade Helper Level.");
                 }
             }
             else
             {
-                Console.WriteLine("Snail Level is already at maximum.");
+                Console.WriteLine("Helper Level is already at maximum.");
             }
         }
 
@@ -159,16 +159,16 @@ namespace FishTankSimulator
             }
         }
 
-        public int GetMaxSnailLevel()
+        public int GetMaxHelperLevel()
         {
             if (Player.GameLevel < 3)
             {
-                Console.WriteLine("Snail upgrades are not available until Game Level 3.");
+                Console.WriteLine("Helper upgrades are not available until Game Level 3.");
                 return 0; 
             }
 
-            int maxSnailLevel = Player.GameLevel - 2;
-            return maxSnailLevel;
+            int maxHelperLevel = Player.GameLevel - 2;
+            return maxHelperLevel;
         }
 
 
@@ -189,21 +189,25 @@ namespace FishTankSimulator
             }
         }
 
-        private void UpdateMaxSnail()
+        private void UpdateMaxHelper()
         {
-            if (Player.GameLevel >= 7)
+            if (Player.GameLevel >= 9)
             {
-                _player.MaxSnail = 2;
+                _player.MaxHelper = 3;
+            }
+            else if (Player.GameLevel >= 6)
+            {
+                _player.MaxHelper = 2;
             }
             else if (Player.GameLevel >= 3)
             {
-                _player.MaxSnail = 1;
+                _player.MaxHelper = 1;
             }
             else
             {
-                _player.MaxSnail = 0;
+                _player.MaxHelper = 0;
             }
-            Console.WriteLine("Updated Max Snail to: " + _player.MaxSnail);
+            Console.WriteLine("Updated Max Helper to: " + _player.MaxHelper);
         }
         private void UpdateMaxFish()
         {
@@ -235,8 +239,8 @@ namespace FishTankSimulator
         public int GetGameLevelUpdateCost(){
             return 2000 + 2000 * (Player.GameLevel - 1);
         }
-        public int GetSnailUpdateCost(){
-            return 1000 + 1000 * (_player.SnailLevel - 1);
+        public int GetHelperUpdateCost(){
+            return 1000 + 1000 * (_player.HelperLevel - 1);
         }
 
     }
