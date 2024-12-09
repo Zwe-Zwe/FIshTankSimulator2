@@ -24,13 +24,13 @@ namespace FishTankSimulator
         private Player _player;
         private bool isOkButtonClicked;
 
-        public Upgrade(int screenWidth, int screenHeight, LevelManagement levelManagement, Player player)
+        public Upgrade(LevelManagement levelManagement, Player player)
         {
             // UI dimensions
-            uiWidth = screenWidth * 0.8f;
-            uiHeight = screenHeight * 0.6f;
-            uiX = (screenWidth - uiWidth) / 2;
-            uiY = (screenHeight - uiHeight) / 2;
+            uiWidth = Program.windowWidth * 0.8f;
+            uiHeight = Program.windowHeight * 0.6f;
+            uiX = (Program.windowWidth - uiWidth) / 2;
+            uiY = (Program.windowHeight - uiHeight) / 2;
             isActive = false;
             itemSize = (uiWidth / ITEMS_PER_ROW) * 0.6f; // Slightly larger items
             itemSpacing = 15; // Increased spacing
@@ -73,7 +73,7 @@ namespace FishTankSimulator
         }
 
         // Inside the Upgrade class
-public void Draw(int windowWidth)
+public void Draw()
 {
     const float padding = 40f;
     const float bottomPadding = 60f;

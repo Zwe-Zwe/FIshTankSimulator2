@@ -129,7 +129,7 @@ namespace FishTankSimulator
             {
                 ResetAppearanceTimer();
                 activeDuration = 20f;
-                Position = GetRandomPosition(Program.windowWidth);
+                Position = GetRandomPosition();
                 hasDroppedTreasure = false;
             }
 
@@ -157,9 +157,9 @@ namespace FishTankSimulator
         /// <summary>
         /// Generates a random starting position for the fish.
         /// </summary>
-        private Vector2 GetRandomPosition(int windowHeight)
+        private Vector2 GetRandomPosition()
         {
-            int y = Raylib.GetRandomValue(100, windowHeight - 100);
+            int y = Raylib.GetRandomValue(100, Program.windowHeight - 100);
             return new Vector2(-100, y);
         }
 

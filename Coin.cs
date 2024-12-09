@@ -46,13 +46,13 @@ namespace FishTankSimulator
             return Raylib.CheckCollisionPointRec(mousePosition, coinRect);
         }
 
-        public override void Update(float deltaTime, int windowHeight)
+        public override void Update(float deltaTime)
         {
-            if (!_isAtBottom && position.Y < windowHeight - _animationFrames[0].Height + 50)
+            if (!_isAtBottom && position.Y < Program.windowHeight - _animationFrames[0].Height + 50)
             {
                 position = new Vector2(position.X, position.Y + 100 * deltaTime);
             }
-            else if (!_isAtBottom && position.Y >= windowHeight - _animationFrames[0].Height + 50)
+            else if (!_isAtBottom && position.Y >= Program.windowHeight - _animationFrames[0].Height + 50)
             {
                 _isAtBottom = true;
             }

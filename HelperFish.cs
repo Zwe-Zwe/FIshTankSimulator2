@@ -16,7 +16,7 @@ namespace FishTankSimulator
         private int priorityOffset; // Unique offset for coin prioritization
         private Coin assignedCoin; // Coin currently being targeted
 
-        public HelperFish(Tank tank, int windowHeight, float startPosition, Player player, int helperId)
+        public HelperFish(Tank tank, float startPosition, Player player, int helperId)
             : base(tank)
         {
             bottomMargin = 70f;
@@ -24,7 +24,7 @@ namespace FishTankSimulator
             _player = player;
 
             // Set position to the bottom of the tank
-            Position = new Vector2(startPosition, windowHeight - bottomMargin); // Start at bottom-left
+            Position = new Vector2(startPosition, Program.windowHeight - bottomMargin); // Start at bottom-left
             IsMovingLeft = true; // Starts moving left by default
 
 

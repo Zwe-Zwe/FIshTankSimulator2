@@ -21,7 +21,7 @@ namespace FishTankSimulator.Tests
             var initialPosition = coin.Position;
             
             // Act
-            coin.Update(1.0f, 600);  // Simulate 1 second of update
+            coin.Update(1.0f);  // Simulate 1 second of update
             
             // Assert
             Assert.AreNotEqual(initialPosition, coin.Position); // The position should have changed
@@ -63,7 +63,7 @@ namespace FishTankSimulator.Tests
             var initialPosition = food.Position;
             
             // Act
-            food.Update(1.0f, 600);  // Simulate 1 second of update
+            food.Update(1.0f);  // Simulate 1 second of update
             
             // Assert
             Assert.AreNotEqual(initialPosition, food.Position); // The position should have changed
@@ -78,7 +78,7 @@ namespace FishTankSimulator.Tests
             Player player = new Player();
             // Arrange
             var food = new Food(new Vector2(100, 100), player);
-            food.Update(1.0f, 600);  // Simulate 1 second of update
+            food.Update(1.0f);  // Simulate 1 second of update
             // Act
             var value = food.GetValue();
 
@@ -108,7 +108,7 @@ namespace FishTankSimulator.Tests
             var initialPosition = treasure.Position;
 
             // Act
-            treasure.Update(1.0f, 600); // Simulate 1 second of update
+            treasure.Update(1.0f); // Simulate 1 second of update
 
             // Assert
             Assert.AreNotEqual(initialPosition, treasure.Position, "The position should have changed during the fall.");

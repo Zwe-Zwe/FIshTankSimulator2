@@ -29,7 +29,7 @@ namespace FishTankSimulator
         private Font customFont = Raylib.LoadFont("font/font.ttf"); // Declare a custom font
 
         // Constructor
-        public Tank(Shop shop, Player player, Upgrade upgrade, int windowWidth, int windowHeight)
+        public Tank(Shop shop, Player player, Upgrade upgrade)
         {
             _player = player;
             _foodList = new List<Food>();
@@ -48,7 +48,7 @@ namespace FishTankSimulator
             currentWeaponCount = 0;
             timer = 0;
             _upgrade = upgrade;
-            _inGameMenu = new InGameMenu(windowWidth, windowHeight);
+            _inGameMenu = new InGameMenu();
             ButtonTexture = Raylib.LoadTexture("sprites/button.png");
         }
 
@@ -57,7 +57,7 @@ namespace FishTankSimulator
         /// <summary>
         /// Attempts to buy a fish from the shop and adds it to the tank if successful.
         /// </summary>
-        public bool TryBuyFish(int fishIndex, int windowWidth, int windowHeight)
+        public bool TryBuyFish(int fishIndex)
         {
             // Get the cost of the selected item (fish or Helper)
             int fishCost = _shop.GetFishCost(fishIndex);
@@ -76,9 +76,9 @@ namespace FishTankSimulator
                     _player.Money -= fishCost;
 
                     Random random = new Random();
-                    int startPosition = random.Next(1, windowWidth - 1); 
+                    int startPosition = random.Next(1, Program.windowWidth - 1); 
                     int helperId = _helperList.Count; // Or any other unique value
-                    HelperFish newHelper = new HelperFish(this, windowHeight, startPosition, _player, helperId);
+                    HelperFish newHelper = new HelperFish(this, startPosition, _player, helperId);
 
 
                     AddHelper(newHelper);
@@ -100,7 +100,7 @@ namespace FishTankSimulator
             {
                 _player.Money -= fishCost;
 
-                Vector2 initialPosition = GetRandomPosition(windowWidth, windowHeight);
+                Vector2 initialPosition = GetRandomPosition();
                 // Pass the CoinFishType to the CoinFish constructor
                 CoinFish newFish = new CoinFish(initialPosition, (CoinFishType)fishIndex, this);
 
@@ -125,7 +125,7 @@ namespace FishTankSimulator
         /// <summary>
         /// Updates all objects in the tank (fish, coins, and food).
         /// </summary>
-        public void Update(float deltaTime, int windowWidth, int windowHeight, bool clickConsumed)
+        public void Update(float deltaTime, bool clickConsumed)
         {
             foodCost = 10 + ((_player.FoodLevel - 1) * 2); // Calculate cost based on food level
             
@@ -178,34 +178,34 @@ namespace FishTankSimulator
             // Update coins and handle interactions, ensuring coin movement is unaffected
             if (!clickHandled)
             {
-                clickHandled = UpdateCoins(deltaTime, windowHeight);
+                clickHandled = UpdateCoins(deltaTime);
             }
 
             if (!clickHandled)
             {
-                clickHandled = UpdateTreasure(deltaTime, windowHeight);
+                clickHandled = UpdateTreasure(deltaTime);
             }
 
             // Handle food interaction only if click wasn't consumed by coin collection or weapon
             if (!clickHandled)
             {
-                HandleFoodInteraction(ref clickHandled, windowWidth);
+                HandleFoodInteraction(ref clickHandled);
             }
 
             // Update fish, food, and other objects
-            UpdateFish(deltaTime, windowWidth, windowHeight);
-            UpdateExorticFish(deltaTime, windowWidth, windowHeight);
-            UpdateFood(deltaTime, windowHeight);
-            UpdatePredators(deltaTime, windowWidth, windowHeight);
-            UpdateHelper(deltaTime, windowWidth, windowHeight);
+            UpdateFish(deltaTime);
+            UpdateExorticFish(deltaTime);
+            UpdateFood(deltaTime);
+            UpdatePredators(deltaTime);
+            UpdateHelper(deltaTime);
             // Draw the weapon effect regardless of clickHandled to allow interaction with weapon while keeping other interactions intact    
         }
-        private void UpdateFish(float deltaTime, int windowWidth, int windowHeight)
+        private void UpdateFish(float deltaTime)
         {
             for (int i = _fishList.Count - 1; i >= 0; i--)
             {
                 var fish = _fishList[i];
-                fish.Update(deltaTime, windowWidth, windowHeight);
+                fish.Update(deltaTime);
 
                 if (fish.Health.Current<= 0)
                 {
@@ -214,13 +214,13 @@ namespace FishTankSimulator
                 }
             }
         }
-        private void UpdateExorticFish(float deltaTime, int windowWidth, int windowHeight)
+        private void UpdateExorticFish(float deltaTime)
         {
             // Handle spawning predators
             _exoticFishSpawnTimer += deltaTime;
             if (_exoticFishSpawnTimer >= _exoticFishSpawnInterval && _exoticFishList.Count < 1)
             {
-                SpawnExoticFish(windowHeight);
+                SpawnExoticFish();
                 _exoticFishSpawnTimer = 0f;
             }
 
@@ -236,10 +236,10 @@ namespace FishTankSimulator
                     continue; // Skip to the next iteration
                 }
                 // Update predator's state
-                exoticFish.Update(deltaTime, windowWidth, windowHeight);
+                exoticFish.Update(deltaTime);
 
                 // Remove predator if it leaves the tank
-                if (exoticFish.Position.X < -100 || exoticFish.Position.X > windowWidth + 100)
+                if (exoticFish.Position.X < -100 || exoticFish.Position.X > Program.windowWidth + 100)
                 {
                     Console.WriteLine($"Predator at index {i} has left the tank. Removing it.");
                     _exoticFishList.RemoveAt(i);
@@ -248,16 +248,16 @@ namespace FishTankSimulator
         }
 
 
-        private void UpdateHelper(float deltaTime, int windowWidth, int windowHeight)
+        private void UpdateHelper(float deltaTime)
         {
             for (int i = _helperList.Count - 1; i >= 0; i--)
             {
                 var helper = _helperList[i];
-                helper.Update(deltaTime, windowWidth, windowHeight);
+                helper.Update(deltaTime);
             }
         }
 
-        private bool UpdateCoins(float deltaTime, int windowHeight)
+        private bool UpdateCoins(float deltaTime)
         {
             bool clickHandled = false; // Track if the click was handled by a coin
 
@@ -266,7 +266,7 @@ namespace FishTankSimulator
                 var coin = _coinList[i];
 
                 // Update the coin's position every frame
-                coin.Update(deltaTime, windowHeight);
+                coin.Update(deltaTime);
 
                 // Check for coin interaction (mouse click) if the click isn't already handled
                 if (!clickHandled && Raylib.IsMouseButtonPressed(MouseButton.Left))
@@ -293,7 +293,7 @@ namespace FishTankSimulator
             return clickHandled;
         }
 
-        private bool UpdateTreasure(float deltaTime, int windowHeight)
+        private bool UpdateTreasure(float deltaTime)
         {
             bool clickHandled = false; // Track if the click was handled by a coin
 
@@ -302,7 +302,7 @@ namespace FishTankSimulator
                 var treasure = _treasureList[i];
 
                 // Update the coin's position every frame
-                treasure.Update(deltaTime, windowHeight);
+                treasure.Update(deltaTime);
 
                 // Check for coin interaction (mouse click) if the click isn't already handled
                 if (!clickHandled && Raylib.IsMouseButtonPressed(MouseButton.Left))
@@ -330,12 +330,12 @@ namespace FishTankSimulator
         }
 
 
-        private void UpdateFood(float deltaTime, int windowHeight)
+        private void UpdateFood(float deltaTime)
         {
             for (int i = _foodList.Count - 1; i >= 0; i--)
             {
                 var food = _foodList[i];
-                food.Update(deltaTime, windowHeight);
+                food.Update(deltaTime);
 
                 if (!food.IsActive)
                 {
@@ -348,13 +348,13 @@ namespace FishTankSimulator
         /// Updates all treasures in the tank.
         /// </summary>
   
-        private void UpdatePredators(float deltaTime, int windowWidth, int windowHeight)
+        private void UpdatePredators(float deltaTime)
         {
             // Handle spawning predators
             _predatorSpawnTimer += deltaTime;
             if (_predatorSpawnTimer >= _predatorSpawnInterval)
             {
-                SpawnPredator(windowHeight);
+                SpawnPredator();
                 _predatorSpawnTimer = 0f;
             }
 
@@ -380,7 +380,7 @@ namespace FishTankSimulator
                 }
 
                 // Update predator's state
-                predator.Update(deltaTime, windowWidth, windowHeight);
+                predator.Update(deltaTime);
 
                 // Remove predator if health is depleted
                 if (predator.Health.Current <= 0)
@@ -391,7 +391,7 @@ namespace FishTankSimulator
                 }
 
                 // Remove predator if it leaves the tank
-                if (predator.Position.X < -100 || predator.Position.X > windowWidth + 100)
+                if (predator.Position.X < -100 || predator.Position.X > Program.windowWidth + 100)
                 {
                     Console.WriteLine($"Predator at index {i} has left the tank. Removing it.");
                     _predatorFishList.RemoveAt(i);
@@ -435,7 +435,7 @@ namespace FishTankSimulator
         /// <summary>
         /// Renders all objects in the tank (fish, coins, food) and the player's money.
         /// </summary>
-        public void Draw(float deltaTime, int windowWidth)
+        public void Draw(float deltaTime)
         {
             foreach (var fish in _fishList)
                 fish.Draw(deltaTime);
@@ -458,29 +458,29 @@ namespace FishTankSimulator
             foreach (var helper in _helperList)
                 helper.Draw(deltaTime);
 
-            DrawHUD(windowWidth);
+            DrawHUD();
             _shop.Weapon.HandleWeaponEffect(null, deltaTime, _player);
             if (_upgrade.IsActive)
             {
-                _upgrade.Draw(windowWidth); 
+                _upgrade.Draw(); 
             }
             _inGameMenu.Draw();
         }
-        private void DrawHUD(int windowWidth)
+        private void DrawHUD()
         {
             // Draw money information
-            DrawTextWithCustomFont($"Money: {_player.Money}", new Vector2(windowWidth - 500, 50));
+            DrawTextWithCustomFont($"Money: {_player.Money}", new Vector2(Program.windowWidth - 500, 50));
 
             // Draw level information
-            DrawTextWithCustomFont($"Level: {Player.GameLevel}", new Vector2(windowWidth - 500, 20));
+            DrawTextWithCustomFont($"Level: {Player.GameLevel}", new Vector2(Program.windowWidth - 500, 20));
 
             // Draw buttons and handle clicks using background images
-            if (DrawButton("Upgrade", new Rectangle(windowWidth - 200, 20, 100, 30), Color.LightGray, Color.White))
+            if (DrawButton("Upgrade", new Rectangle(Program.windowWidth - 200, 20, 100, 30), Color.LightGray, Color.White))
             {
                 _upgrade.SetIsActive();
             }
 
-            if (DrawButton("Menu", new Rectangle(windowWidth - 200, 70, 100, 30), Color.LightGray, Color.White))
+            if (DrawButton("Menu", new Rectangle(Program.windowWidth - 200, 70, 100, 30), Color.LightGray, Color.White))
             {
                 _inGameMenu.IsMenuVisible = !_inGameMenu.IsMenuVisible; // Activate the menu state
             }
@@ -555,17 +555,17 @@ namespace FishTankSimulator
         }
 
 
-        private bool IsButtonClicked(int windowWidth)
+        private bool IsButtonClicked()
         {
             try{
             // Check for "Upgrade" button click using background image
-            if (DrawButton("Upgrade", new Rectangle(windowWidth - 200, 20, 100, 30), Color.LightGray, Color.White))
+            if (DrawButton("Upgrade", new Rectangle(Program.windowWidth - 200, 20, 100, 30), Color.LightGray, Color.White))
             {
                 return true;
             }
 
             // Check for "Menu" button click using background image
-            if (DrawButton("Menu", new Rectangle(windowWidth - 200, 70, 100, 30), Color.LightGray, Color.White))
+            if (DrawButton("Menu", new Rectangle(Program.windowWidth - 200, 70, 100, 30), Color.LightGray, Color.White))
             {
                 return true;
             }
@@ -623,18 +623,18 @@ namespace FishTankSimulator
         {
             _treasureList.Add(treasure);
         }
-        private void SpawnPredator(int windowHeight)
+        private void SpawnPredator()
         {
-            Vector2 spawnPosition = new Vector2(-100, Raylib.GetRandomValue(100, windowHeight - 100));
+            Vector2 spawnPosition = new Vector2(-100, Raylib.GetRandomValue(100, Program.windowHeight - 100));
             PredatorFish predator = new PredatorFish(spawnPosition, this, _player.GetPredatorType()); // Pass the current Tank instance
 
             predator.OnFishEaten += HandleFishEaten;
 
             _predatorFishList.Add(predator);
         }
-        private void SpawnExoticFish(int windowHeight)
+        private void SpawnExoticFish()
         {
-            Vector2 spawnPosition = new Vector2(-100, Raylib.GetRandomValue(100, windowHeight - 100));
+            Vector2 spawnPosition = new Vector2(-100, Raylib.GetRandomValue(100, Program.windowHeight - 100));
             ExoticFish exoticFish = new ExoticFish(spawnPosition, this); // Pass the current Tank instance
             _exoticFishList.Add(exoticFish);
             exoticFish.OnTreasureDropped += AddTreasureToTank;
@@ -695,14 +695,14 @@ namespace FishTankSimulator
 
             return nearestFish;
         }
-        private void HandleFoodInteraction(ref bool clickHandled, int windowWidth)
+        private void HandleFoodInteraction(ref bool clickHandled)
         {
             // If the click is already handled or the weapon is active, do nothing
             if (clickHandled || _shop.IsWeaponActivated())
                 return;
 
             // Check if the player clicks to drop food
-            if (Raylib.IsMouseButtonPressed(MouseButton.Left) && !IsShopInteracting() && !IsButtonClicked(windowWidth))
+            if (Raylib.IsMouseButtonPressed(MouseButton.Left) && !IsShopInteracting() && !IsButtonClicked())
             {
                 Vector2 mousePosition = Raylib.GetMousePosition();
 
@@ -715,10 +715,10 @@ namespace FishTankSimulator
                 }
             }
         }
-        private Vector2 GetRandomPosition(int windowWidth, int windowHeight)
+        private Vector2 GetRandomPosition()
         {
-            int x = Raylib.GetRandomValue(100, windowWidth - 100);
-            int y = Raylib.GetRandomValue(100, windowHeight - 100);
+            int x = Raylib.GetRandomValue(100, Program.windowWidth - 100);
+            int y = Raylib.GetRandomValue(100, Program.windowHeight - 100);
             return new Vector2(x, y);
         }
         public List<Coin> CoinList

@@ -20,7 +20,7 @@ namespace FishTankSimulator
             texture = sharedTexture;
         }
 
-        public override void Update(float deltaTime, int windowHeight)
+        public override void Update(float deltaTime)
         {
             
             nutrientValue = 40 + ((_player.FoodLevel - 1) * 5); // Calculate nutrient value based on food level
@@ -29,7 +29,7 @@ namespace FishTankSimulator
 
             position = new Vector2(position.X, position.Y + fallSpeed * deltaTime);
 
-            if (position.Y >= windowHeight - texture.Height)
+            if (position.Y >= Program.windowHeight - texture.Height)
             {
                 isActive = false;
             }

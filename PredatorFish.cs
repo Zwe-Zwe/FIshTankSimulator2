@@ -153,7 +153,7 @@ namespace FishTankSimulator
             {
                 ResetAppearanceTimer();
                 _activeDuration = 10f;
-                Position = GetRandomPosition(Program.windowWidth);
+                Position = GetRandomPosition();
             }
 
             // Continuously update direction
@@ -180,9 +180,9 @@ namespace FishTankSimulator
         /// <summary>
         /// Get a random position for re-entering the tank.
         /// </summary>
-        private Vector2 GetRandomPosition(int windowHeight)
+        private Vector2 GetRandomPosition()
         {
-            int y = Raylib.GetRandomValue(100, windowHeight - 100);
+            int y = Raylib.GetRandomValue(100, Program.windowHeight - 100);
             return new Vector2(-100, y);
         }
 

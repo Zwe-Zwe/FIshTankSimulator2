@@ -30,8 +30,8 @@ namespace FishTankSimulator
             _shop = new Shop(_weapon, player);
             levelManagement = new LevelManagement(player, _shop);
             _menu = new Menu();
-            upgrade = new Upgrade(Program.windowWidth, Program.windowHeight, levelManagement, player);
-            _tank = new Tank(_shop, player, upgrade, Program.windowWidth, Program.windowHeight);
+            upgrade = new Upgrade(levelManagement, player);
+            _tank = new Tank(_shop, player, upgrade);
             _tankBackground = Raylib.LoadTexture("sprites/tank.png");
             if (_tankBackground.Id == 0)
             {
@@ -57,7 +57,7 @@ namespace FishTankSimulator
                 }
                 else
                 {
-                    HandleGame(Program.windowWidth);
+                    HandleGame();
                 }
             }
 

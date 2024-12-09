@@ -9,8 +9,8 @@ namespace FishTankSimulator
         public static void Main()
         {
             // Create and run the game
-            Game game = new Game(windowWidth, windowHeight);
-            game.Run(windowWidth);
+            Game game = new Game();
+            game.Run();
         }
     }
 }

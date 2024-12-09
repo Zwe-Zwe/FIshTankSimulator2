@@ -13,7 +13,7 @@ namespace FishTankSimulator
 
         public bool isMenuVisible;
 
-        public InGameMenu(int screenWidth, int screenHeight)
+        public InGameMenu()
         {
             isMenuVisible = false;
 
@@ -30,8 +30,8 @@ namespace FishTankSimulator
                 float buttonWidth = 200; // Adjust to your sprite's width
                 float buttonHeight = 50; // Adjust to your sprite's height
                 buttonBounds[i] = new Rectangle(
-                    screenWidth / 2 - buttonWidth / 2,
-                    screenHeight / 2 - (buttonHeight * buttonBounds.Length) / 2 + i * (buttonHeight + 10),
+                    Program.windowWidth / 2 - buttonWidth / 2,
+                    Program.windowWidth / 2 - (buttonHeight * buttonBounds.Length) / 2 + i * (buttonHeight + 10),
                     buttonWidth,
                     buttonHeight
                 );
