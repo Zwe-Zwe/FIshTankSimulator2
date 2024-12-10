@@ -25,20 +25,9 @@ namespace FishTankSimulator
         } 
         public abstract int GetValue();  // Abstract method to return value (specific to each item)
 
-
         // Update fall behavior
-        public virtual void Update(float deltaTime)
-        {
-            if (!isActive) return;
-
-            position = new Vector2(position.X, position.Y + fallSpeed * deltaTime);
-
-            if (position.Y >= Program.windowHeight - texture.Height)
-            {
-                isActive = false;
-            }
-        }
-
+        public abstract void Update(float deltaTime);
+        
         public void UnloadTexture()
         {
             Raylib.UnloadTexture(texture);

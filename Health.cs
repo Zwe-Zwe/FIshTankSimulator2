@@ -6,21 +6,30 @@ using Raylib_cs;
 namespace FishTankSimulator{
     public class Health
 {
-    public float Current { get; private set; }
-    public float Max { get; private set; }
+    private float current;
+    private float max;
 
     public Health(float maxHealth)
     {
-        Max = maxHealth;
-        Current = maxHealth;
+        max = maxHealth;
+        current = maxHealth;
+    }
+    public float Current{
+        get { return current; }
+        set { current = value; }
     }
 
-    public void Reduce(float amount) => Current = Math.Max(0, Current - amount);
-    public void Increase(float amount) => Current = Math.Min(Max, Current + amount);
+    public float Max{
+        get { return max; }
+        set { max = value; }
+    }
+
+    public void Reduce(float amount) => current = Math.Max(0, current - amount);
+    public void Increase(float amount) => current = Math.Min(max, current + amount);
 
     public void Draw(Vector2 position, float width, float height)
     {
-        float percentage = Current / Max;
+        float percentage = current / max;
 
         Raylib.DrawRectangle((int)position.X, (int)position.Y, (int)width, (int)height, Color.Gray);
         Raylib.DrawRectangle((int)position.X, (int)position.Y, (int)(width * percentage), (int)height, Color.Green);
